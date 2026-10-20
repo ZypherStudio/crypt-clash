@@ -1,0 +1,20 @@
+{
+  "name": "crypt-clash-mobile",
+  "version": "1.0.0",
+  "description": "Crypt Clash: 16-Bit Dark Fantasy Tactical Dice RPG (Android & iOS)",
+  "scripts": {
+    "sync:web": "mkdir -p www/assets && cp index.html privacy-policy.html style.css game.js audio.js manifest.json sw.js www/ && cp assets/*.png www/assets/",
+    "cap:sync": "npm run sync:web && npx cap sync",
+    "android:open": "npx cap open android",
+    "ios:open": "npx cap open ios",
+    "start": "python3 -m http.server 8765"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}

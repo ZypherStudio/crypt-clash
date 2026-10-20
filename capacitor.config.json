@@ -1,0 +1,13 @@
+{
+  "appId": "com.cryptclash.rpg",
+  "appName": "Crypt Clash",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#07080a",
+  "ios": {
+    "contentInset": "always"
+  },
+  "android": {
+    "backgroundColor": "#07080a"
+  }
+}

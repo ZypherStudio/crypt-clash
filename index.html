@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#14181d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Crypt Clash" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="assets/icon-192.png" />
+  <title>CRYPT CLASH: Mobile Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=4.0" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Utility / Mobile Navigation Bar (Fixed Single-Line, Zero Overflow) -->
+    <header class="utility-bar">
+      <button class="util-btn icon-only" id="btn-open-menu" title="Ana Menü">
+        🏠
+      </button>
+
+      <button class="chapter-pill-btn" id="btn-open-map" title="Bölüm Haritasını ve Zindan Seçimini Aç">
+        <span id="player-level-badge" class="badge-hero-lv">Lv.1</span>
+        <span id="floor-badge" class="badge-floor">🗺️ D1•B1•1/5</span>
+        <span id="chapter-name-badge" class="badge-enemy">Sular Altındaki Mahzen ▾</span>
+      </button>
+
+      <div class="utility-actions">
+        <button id="btn-reroll" class="util-btn" title="Eldeki zarları yeniden at">
+          🎲<span class="cost-tag" id="header-reroll-cost">2G</span>
+        </button>
+        <button id="btn-open-tree" class="util-btn highlight-btn" title="Geliştirme Ağacı (Ruh Taşları)">
+          🌳<span id="header-souls-badge" class="cost-tag">0💎</span>
+        </button>
+        <button id="btn-open-inventory" class="util-btn" title="Kahraman & Envanter (Zırh, Kask, Silah, Pet & +Basma)">
+          🛡️<span id="header-gear-badge" class="cost-tag">4</span>
+        </button>
+        <button id="btn-open-arena-top" class="util-btn highlight-btn" title="Online Arena, PvP Düello & Sonsuz Kule Sıralaması">
+          🌐<span id="header-trophies-badge" class="cost-tag">100🏆</span>
+        </button>
+        <button id="btn-open-quests-top" class="util-btn" title="Başarımlar & Günlük Çark (Trophy)">
+          🏆<span id="header-quests-badge" class="cost-tag">!</span>
+        </button>
+        <button id="btn-open-guide" class="util-btn icon-only guide-btn desktop-only" title="Nasıl Oynanır? (Oyun Rehberi)">
+          ❓
+        </button>
+        <button id="btn-music" class="util-btn icon-only music-btn desktop-only" title="Orta Çağ Müziği Aç/Kapat">
+          🎵
+        </button>
+        <button id="btn-sound" class="util-btn icon-only sound-btn desktop-only" title="Ses Efektleri Aç/Kapat">
+          🔊
+        </button>
+      </div>
+    </header>
+
+    <!-- Live Achievement Unlocked Toast Notification -->
+    <div id="achievement-toast" class="achievement-toast hidden">
+      <div class="ach-toast-icon" id="ach-toast-icon">🏆</div>
+      <div class="ach-toast-body">
+        <span class="ach-toast-tag">✨ BAŞARIM AÇILDI!</span>
+        <strong class="ach-toast-title" id="ach-toast-title">İlk Zafer</strong>
+        <span class="ach-toast-reward" id="ach-toast-reward">Ödülü Görevler menüsünden al!</span>
+      </div>
+    </div>
+
+    <!-- Main Game Frame -->
+    <main class="game-frame" id="game-frame">
+
+      <!-- 1. TOP CLASH PANEL -->
+      <section class="top-clash-panel">
+        <div class="top-clasp"></div>
+
+        <!-- Left Column: Player's 2 Hexagonal Clash Dice -->
+        <div class="hex-column left-hex-col">
+          <div class="hex-socket" id="player-hex-0" title="Senin Çarpışma Zarın #1">
+            <div class="hex-outer">
+              <div class="hex-inner">
+                <canvas class="die-canvas" width="52" height="52"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="hex-socket" id="player-hex-1" title="Senin Çarpışma Zarın #2">
+            <div class="hex-outer">
+              <div class="hex-inner">
+                <canvas class="die-canvas" width="52" height="52"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center Column: Clash Score & Result Banner -->
+        <div class="clash-center-col">
+          <div class="stone-plaque score-plaque">
+            <div class="plaque-inner">
+              <span id="clash-player-total" class="clash-num player-num">7</span>
+              <span class="clash-vs">vs</span>
+              <span class="clash-num enemy-num">
+                <span id="clash-enemy-raw">6</span><sup id="clash-enemy-mod">-1</sup>
+              </span>
+            </div>
+          </div>
+
+          <div class="stone-plaque banner-plaque">
+            <div class="plaque-inner">
+              <span id="clash-status-text" class="clash-status victory">SENİN TURUN</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Enemy's 2 Hexagonal Clash Dice -->
+        <div class="hex-column right-hex-col">
+          <div class="hex-socket" id="enemy-hex-0" title="Düşman Çarpışma Zarı #1">
+            <div class="hex-outer">
+              <div class="hex-inner">
+                <canvas class="die-canvas" width="52" height="52"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="hex-socket" id="enemy-hex-1" title="Düşman Çarpışma Zarı #2">
+            <div class="hex-outer">
+              <div class="hex-inner">
+                <canvas class="die-canvas" width="52" height="52"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. MIDDLE DUNGEON VIEWPORT -->
+      <section class="dungeon-viewport" id="dungeon-viewport">
+        <!-- Chapter Room Node Strip (Visual Mini-Map Progress) -->
+        <div class="room-stepper" id="room-stepper"></div>
+
+        <!-- Weapon Tier Badge on Top-Right of Viewport -->
+        <div class="weapon-tier-badge" id="weapon-tier-badge" title="Mevcut Kılıç Seviyesi">
+          🗡️ Demir Kılıç
+        </div>
+
+        <!-- Interactive Step-by-Step Coach Overlay Banner -->
+        <div id="battle-coach-banner" class="battle-coach-banner hidden">
+          <div class="coach-avatar">🧙‍♂️</div>
+          <div class="coach-text-box">
+            <div class="coach-step-title" id="coach-step-title">REHBER • ADIM 1/3</div>
+            <div class="coach-step-desc" id="coach-step-desc">Sağ alttaki 3 zardan birini <b>Saldırı</b>, <b>Şifa</b> veya <b>Rün</b> kartının üzerine sürükle!</div>
+          </div>
+          <button id="btn-close-coach" class="coach-close-btn" title="İpuçlarını Kapat">✕</button>
+        </div>
+
+        <!-- Enemy HP Bar & Dual Target Selector at Top of Scene -->
+        <div class="enemy-hp-container" id="enemy-hp-container">
+          <div class="enemies-tactical-row" id="enemies-tactical-row">
+            <!-- Enemy 0 (Primary) -->
+            <div class="enemy-unit-box active" id="enemy-box-0" data-idx="0" title="1. Düşman (Hedeflemek için tıkla)">
+              <div class="enemy-title-row">
+                <span class="target-reticle" id="target-reticle-0">🎯</span>
+                <span id="enemy-title-label-0" class="enemy-title-label">Lanetli İskelet Muhafızı</span>
+              </div>
+              <div class="enemy-hp-frame">
+                <div id="enemy-hp-fill-0" class="enemy-hp-fill" style="width: 100%;"></div>
+                <span id="enemy-hp-text-0" class="enemy-hp-text">36/36</span>
+              </div>
+              <div class="enemy-meta-row">
+                <div id="enemy-intent-pill-0" class="enemy-intent-pill">💀 Paslı Kılıç • Z: 0</div>
+                <div id="enemy-status-row-0" class="enemy-status-row"></div>
+              </div>
+            </div>
+
+            <!-- Enemy 1 (Secondary - Visible in 2-Enemy Fights!) -->
+            <div class="enemy-unit-box hidden" id="enemy-box-1" data-idx="1" title="2. Düşman (Hedeflemek için tıkla)">
+              <div class="enemy-title-row">
+                <span class="target-reticle" id="target-reticle-1">🎯</span>
+                <span id="enemy-title-label-1" class="enemy-title-label">Kızıl Engerek</span>
+              </div>
+              <div class="enemy-hp-frame">
+                <div id="enemy-hp-fill-1" class="enemy-hp-fill" style="width: 100%;"></div>
+                <span id="enemy-hp-text-1" class="enemy-hp-text">28/28</span>
+              </div>
+              <div class="enemy-meta-row">
+                <div id="enemy-intent-pill-1" class="enemy-intent-pill">🐍 Çift Pala • Z: -1</div>
+                <div id="enemy-status-row-1" class="enemy-status-row"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Battle Canvas -->
+        <canvas id="battle-canvas" width="470" height="444"></canvas>
+
+        <!-- Tactile Hint Overlay -->
+        <div id="turn-hint" class="turn-hint">
+          Sağdaki zarları <b>Saldırı</b>, <b>Şifa</b> veya <b>Rün</b> kartına sürükle!
+        </div>
+
+        <!-- Room Scene Overlays (Shrine / Campfire / Chest) -->
+        <div id="room-overlay-shrine" class="room-scene-overlay hidden">
+          <div class="scene-overlay-card">
+            <div class="scene-badge">⛩️ KADİM SUNAK</div>
+            <h3 class="scene-title">Rünlerin Kadim Sığınağı</h3>
+            <p class="scene-desc">Karanlık mermer sunağın üzerinde kadim rünler parıldıyor. Bir takdis seç:</p>
+            <div class="scene-choices">
+              <button class="scene-choice-btn" data-choice="dark">
+                <span class="choice-icon">🔮</span>
+                <div class="choice-text">
+                  <div class="choice-head">Karanlık Anlaşma</div>
+                  <div class="choice-sub">-6 Can feda et, kalıcı <b>+1 Çarpışma</b> kazan</div>
+                </div>
+              </button>
+              <button class="scene-choice-btn" data-choice="light">
+                <span class="choice-icon">✨</span>
+                <div class="choice-text">
+                  <div class="choice-head">Işık Takdisi</div>
+                  <div class="choice-sub">Canı tamamen doldur ve <b>+8 Kalkan</b> kazan</div>
+                </div>
+              </button>
+              <button class="scene-choice-btn" data-choice="rune">
+                <span class="choice-icon">💎</span>
+                <div class="choice-text">
+                  <div class="choice-head">Kadim Ruh Taşı</div>
+                  <div class="choice-sub"><b>+1 Ruh Taşı (💎)</b> ve +20 XP topla</div>
+                </div>
+              </button>
+            </div>
+            <button id="btn-leave-shrine" class="scene-continue-btn hidden">Zindanın Derinliklerine İlerle ➔</button>
+          </div>
+        </div>
+
+        <div id="room-overlay-campfire" class="room-scene-overlay hidden">
+          <div class="scene-overlay-card">
+            <div class="scene-badge">🔥 KAMP & DEMİRCİ</div>
+            <h3 class="scene-title">Közlerin Sıcaklığı ve Örs</h3>
+            <p class="scene-desc">Zindanın güvenli bir köşesinde kamp ateşi yanıyor. Seçimini yap:</p>
+            <div class="scene-choices">
+              <button class="scene-choice-btn" data-choice="rest">
+                <span class="choice-icon">🥩</span>
+                <div class="choice-text">
+                  <div class="choice-head">Ateş Başında Dinlen</div>
+                  <div class="choice-sub">+%50 Can yenile ve <b>+2 Geçici Hasar</b> kazan</div>
+                </div>
+              </button>
+              <button class="scene-choice-btn" data-choice="forge">
+                <span class="choice-icon">🔨</span>
+                <div class="choice-text">
+                  <div class="choice-head">Demirci Örsünde Döv</div>
+                  <div class="choice-sub">Silahını bile (Kalıcı <b>+1 Saldırı Bonusu</b>)</div>
+                </div>
+              </button>
+              <button class="scene-choice-btn" data-choice="polish">
+                <span class="choice-icon">🎲</span>
+                <div class="choice-text">
+                  <div class="choice-head">Zar Bileme</div>
+                  <div class="choice-sub">Sonraki savaş için <b>Zar 6 Garantisi</b> ekle</div>
+                </div>
+              </button>
+            </div>
+            <button id="btn-leave-campfire" class="scene-continue-btn hidden">Bölüm Boss Kapısına İlerle ➔</button>
+          </div>
+        </div>
+
+        <div id="room-overlay-chest" class="room-scene-overlay hidden">
+          <div class="scene-overlay-card">
+            <div class="scene-badge">👑 HAZİNE ODASI</div>
+            <h3 class="scene-title">Kadim Hazine Sandığı</h3>
+            <p class="scene-desc">Boss'un arkasındaki gizli kemerli odada mühürlü bir sandık buldun!</p>
+            <div class="chest-box-container">
+              <button id="btn-open-chest" class="chest-interactive-btn" title="Sandığı Aç!">
+                🎁 <span>SANDIĞI AÇ</span>
+              </button>
+            </div>
+            <div id="chest-rewards-box" class="chest-rewards-box hidden"></div>
+            <button id="btn-leave-chest" class="scene-continue-btn hidden">Sonraki Bölüme Geç ➔</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. BOTTOM PLAYER HUD & TACTICAL DICE PANEL -->
+      <section class="bottom-hud-panel">
+        <div class="hud-main-row">
+
+          <!-- Left Column: Relic Slot + Ultimate Rage Skill + Gold -->
+          <div class="hud-left-col">
+            <div id="relic-slot" class="relic-slot drop-target" data-action="relic" title="Tılsım Yuvası: Zarı buraya bırakarak özel güç tetikle!">
+              <div class="relic-inner" id="relic-inner">
+                <span class="relic-icon" id="relic-icon">🩸</span>
+                <span class="relic-badge" id="relic-badge">+Hasar</span>
+              </div>
+              <div class="relic-label" id="relic-name">Kan Taşı</div>
+            </div>
+            <button id="btn-ultimate-rage" class="ultimate-rage-btn" title="Öfke Dolduğunda Dokun: Kıyamet Darbesi (Tüm Düşmanlara Ağır Hasar + Kalkan)">
+              <span class="ult-fill-bar" id="ult-fill-bar" style="width: 0%;"></span>
+              <span class="ult-text" id="ult-text">🔥 %0</span>
+            </button>
+            <div id="gold-counter" class="gold-counter">12 Gold</div>
+          </div>
+
+          <!-- Center Column: Player HP/Shield Bar + Riveted 3-Card Action Tray -->
+          <div class="hud-center-col">
+            <!-- Split HP + Blue Shield Bar -->
+            <div class="player-vital-bar">
+              <div class="vital-hp-section">
+                <div id="player-hp-fill" class="player-hp-fill" style="width: 100%;"></div>
+                <span id="player-hp-text" class="vital-text">28/28</span>
+              </div>
+              <div class="vital-shield-section" id="player-shield-section">
+                <span id="player-shield-text" class="vital-shield-text">+10</span>
+              </div>
+            </div>
+
+            <!-- Heavy Riveted Metallic Action Tray (3 Tactical Cards) -->
+            <div class="action-tray-frame">
+              <div class="rivet tl"></div>
+              <div class="rivet tr"></div>
+              <div class="rivet bl"></div>
+              <div class="rivet br"></div>
+
+              <div class="action-cards-container three-cards">
+                <!-- ATTACK CARD -->
+                <div class="action-card drop-target" id="card-attack" data-action="attack" title="Kılıç Saldırısı (6 atarsan Kanama uygular)">
+                  <div class="card-art-frame attack-frame">
+                    <img src="assets/card_attack.png" alt="Attack" class="card-art-img" draggable="false" />
+                    <div class="card-preview-badge" id="preview-attack">⚔️ Hasar</div>
+                    <div class="card-combo-tag">6: Kanama</div>
+                  </div>
+                  <div class="card-label-plate">
+                    <span>Saldırı</span>
+                  </div>
+                </div>
+
+                <!-- HEAL CARD -->
+                <div class="action-card drop-target" id="card-heal" data-action="heal" title="Şifa & Mavi Kalkan (Çift zar +3 ekstra Kalkan verir)">
+                  <div class="card-art-frame heal-frame">
+                    <img src="assets/card_heal.png" alt="Heal" class="card-art-img" draggable="false" />
+                    <div class="card-preview-badge" id="preview-heal">🧪 +Can</div>
+                    <div class="card-combo-tag">Çift: +3🛡️</div>
+                  </div>
+                  <div class="card-label-plate">
+                    <span>Şifa</span>
+                  </div>
+                </div>
+
+                <!-- RUNE / SPECIAL CARD -->
+                <div class="action-card drop-target" id="card-rune" data-action="rune" title="Rün Yıldırımı: Düşman Çarpışma zarını -1 zayıflatır (Tek zar +3 ekstra vurur)">
+                  <div class="card-art-frame rune-frame">
+                    <img src="assets/card_rune.png" alt="Rune" class="card-art-img" draggable="false" />
+                    <div class="card-preview-badge" id="preview-rune">⚡ Rün</div>
+                    <div class="card-combo-tag">Tek: +3⚡</div>
+                  </div>
+                  <div class="card-label-plate">
+                    <span>Rün</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Tactical Action Dice Slots -->
+          <div class="hud-right-col" id="hud-right-col">
+            <div class="action-die-slot" id="action-slot-0" data-slot="0" title="Taktik Zarı #1">
+              <div class="slot-interior">
+                <canvas class="action-die-canvas" id="action-die-canvas-0" width="60" height="60"></canvas>
+              </div>
+            </div>
+
+            <div class="action-die-slot" id="action-slot-1" data-slot="1" title="Taktik Zarı #2">
+              <div class="slot-interior">
+                <canvas class="action-die-canvas" id="action-die-canvas-1" width="60" height="60"></canvas>
+              </div>
+            </div>
+
+            <div class="action-die-slot hidden" id="action-slot-2" data-slot="2" title="Taktik Zarı #3 (Geliştirme Ağacı)">
+              <div class="slot-interior">
+                <canvas class="action-die-canvas" id="action-die-canvas-2" width="60" height="60"></canvas>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom XP Bar -->
+        <div class="xp-bar-wrapper">
+          <div class="xp-bar-track">
+            <div id="xp-bar-fill" class="xp-bar-fill" style="width: 50%;"></div>
+            <span id="xp-bar-text" class="xp-bar-text">Lv.1 (10/20 XP)</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Floating Dragged Die Ghost -->
+    <div id="drag-ghost" class="drag-ghost hidden">
+      <canvas id="drag-ghost-canvas" width="64" height="64"></canvas>
+    </div>
+
+    <!-- MODAL: Chapters Map / Campfire / Shrine / Merchant / Mobile Install -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div class="modal-box">
+        <h2 id="modal-title" class="modal-title">ZİNDAN HARİTASI</h2>
+        <p id="modal-subtitle" class="modal-subtitle"></p>
+        <div id="modal-content" class="modal-content"></div>
+        <div class="modal-footer" id="modal-footer">
+          <button id="modal-close-btn" class="modal-btn primary">Kapat</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         7-DAY DAILY LOGIN CALENDAR REWARDS MODAL
+         ========================================================= -->
+    <div id="daily-login-modal" class="modal-overlay hidden">
+      <div class="modal-box daily-calendar-box">
+        <div class="daily-calendar-header">
+          <span class="daily-streak-pill" id="daily-modal-streak-pill">🔥 1. GÜN SERİSİ</span>
+          <h2>7 GÜNLÜK GİRİŞ TAKVİMİ</h2>
+          <p>Her gün giriş yap; Altın, Ruh Taşı, Sandıklar ve Efsanevi Yoldaş kazan!</p>
+        </div>
+        <div class="daily-calendar-grid" id="daily-calendar-grid">
+          <!-- 7 Day Cards generated by JS -->
+        </div>
+        <div class="modal-footer daily-modal-footer">
+          <button id="btn-claim-daily-reward" class="modal-btn primary daily-claim-btn">GÜNÜN ÖDÜLÜNÜ AL ➔</button>
+          <button id="btn-close-daily-modal" class="modal-btn secondary">Kapat</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         AFK / OFFLINE IDLE DUNGEON PATROL CHEST MODAL
+         ========================================================= -->
+    <div id="idle-patrol-modal" class="modal-overlay hidden">
+      <div class="modal-box idle-patrol-box" style="position:relative;">
+        <button id="btn-close-idle-modal" class="modal-close-btn" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.5); border:1px solid #475569; color:#94a3b8; border-radius:50%; width:28px; height:28px; font-size:14px; cursor:pointer;">✕</button>
+        <div class="idle-patrol-header">
+          <span class="idle-patrol-badge">🛡️ ZİNDAN DEVRİYESİ</span>
+          <h2>ÇEVRİMDIŞI GANİMETİN HAZIR!</h2>
+          <p>Yokluğunda Sir Elden ve Yoldaşın zindan koridorlarını savundu!</p>
+        </div>
+        <div class="idle-patrol-visual">
+          <img id="idle-patrol-hero-img" src="assets/hero_front.png" class="idle-patrol-hero" alt="Sir Elden" />
+          <img id="idle-patrol-pet-img" src="assets/pet_dragon.png" class="idle-patrol-pet" alt="Pet" />
+        </div>
+        <div class="idle-patrol-stats">
+          <div class="idle-stat-chip">⏳ Devriye Süresi: <b id="idle-time-label">0 dk</b> (Maks 8 Saat)</div>
+          <div class="idle-loot-row">
+            <span class="idle-loot-pill gold" id="idle-gold-label">+0💰 Altın</span>
+            <span class="idle-loot-pill xp" id="idle-xp-label">+0⚡ XP</span>
+            <span class="idle-loot-pill gem" id="idle-gems-label">+0💎 Taş</span>
+          </div>
+          <small class="idle-pet-bonus-note" id="idle-pet-bonus-note">🐉 Aktif Yoldaşın +%25 Ekstra Altın kazandırdı!</small>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-claim-idle-loot" class="modal-btn primary" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%);">GANİMETİ TOPLA ➔</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         CLASH ROYALE STYLE LIVE PVP MATCHMAKING RADAR MODAL
+         ========================================================= -->
+    <div id="pvp-matchmaking-modal" class="modal-overlay hidden">
+      <div class="modal-box pvp-radar-box">
+        <div class="pvp-radar-header">
+          <span class="pvp-radar-badge">🌐 CANLI ONLINE EŞLEŞTİRME</span>
+          <h2 id="radar-title">RAKİP ARANIYOR...</h2>
+          <div class="radar-ping-tag" id="radar-ping-tag">⚡ 28ms • Sunucu: TR-Istanbul (Global Pool)</div>
+        </div>
+        
+        <div class="pvp-radar-center">
+          <div class="radar-scan-ring ring-1"></div>
+          <div class="radar-scan-ring ring-2"></div>
+          <div class="radar-scan-ring ring-3"></div>
+          <div class="radar-sweep-beam"></div>
+          <div class="radar-matched-face-icon" id="radar-matched-face">⚔️</div>
+        </div>
+
+        <div class="pvp-match-vs-row">
+          <div class="radar-player-side">
+            <span class="radar-nick" id="radar-my-nick">Sir Elden</span>
+            <span class="radar-trophy" id="radar-my-trophy">🏆 100</span>
+          </div>
+          <span class="radar-vs-text">VS</span>
+          <div class="radar-rival-side" id="radar-rival-side">
+            <span class="radar-nick pulse-text" id="radar-rival-nick">Aranıyor...</span>
+            <span class="radar-trophy" id="radar-rival-trophy">🏆 ???</span>
+          </div>
+        </div>
+
+        <button id="btn-cancel-matchmaking" class="modal-btn secondary cancel-radar-btn">İptal Et</button>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         CLASH ROYALE STYLE CINEMATIC CHEST OPENING STAGE
+         ========================================================= -->
+    <div id="chest-reveal-stage" class="chest-reveal-stage hidden">
+      <div class="chest-reveal-backdrop"></div>
+      <div class="chest-reveal-rays"></div>
+
+      <div class="chest-reveal-content">
+        <div class="chest-reveal-header">
+          <span class="chest-reveal-title" id="chest-reveal-title">GÜMÜŞ SANDIK</span>
+          <span class="chest-reveal-counter" id="chest-reveal-counter">🎁 Kalan Kart: 3 • Açmak için Dokun!</span>
+        </div>
+
+        <!-- Center Stage: Bouncing Animated Chest -->
+        <div class="chest-actor-frame" id="chest-actor-frame">
+          <div class="chest-glow-halo" id="chest-glow-halo"></div>
+          <img id="chest-reveal-img" src="assets/chest_silver.png" alt="Chest" class="chest-reveal-sprite" />
+        </div>
+
+        <!-- Active Flying Card (Spins and reveals) -->
+        <div class="chest-card-stage" id="chest-card-stage"></div>
+
+        <!-- Final Loot Summary Row (shown after all cards revealed) -->
+        <div class="chest-summary-tray hidden" id="chest-summary-tray">
+          <div class="chest-summary-cards" id="chest-summary-cards"></div>
+          <button id="btn-claim-chest-loot" class="chest-claim-cta-btn">ENVANTERE EKLE ➔</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         FULL VIEW: MODERN RPG MAIN MENU / TITLE SCREEN
+         ========================================================= -->
+    <div id="scene-main-menu" class="full-screen-scene hidden">
+      <div class="main-menu-container rpg-modern-menu">
+
+        <!-- 1. TOP PLAYER PROFILE & LEVEL/XP HEADER -->
+        <div class="rpg-profile-header">
+          <div class="rpg-profile-left">
+            <div class="rpg-avatar-ring">
+              <img src="assets/hero_knight.png" alt="Sir Elden" class="rpg-avatar-img" />
+              <span class="rpg-level-pill" id="menu-current-level">Sv.1</span>
+            </div>
+            <div class="rpg-profile-info">
+              <div class="rpg-knight-title-row">
+                <strong class="rpg-knight-name">Sir Elden</strong>
+                <span class="rpg-rank-badge" id="menu-knight-rank">Gezgin Şövalye</span>
+              </div>
+              <div class="rpg-xp-track">
+                <div class="rpg-xp-fill" id="menu-xp-fill" style="width: 0%;"></div>
+                <span class="rpg-xp-text" id="menu-xp-text">0 / 20 XP</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rpg-profile-right">
+            <div class="rpg-currency-bar">
+              <span class="rpg-curr-pill gem" id="menu-soul-gem-count" title="Ruh Taşları">💎 0</span>
+              <span class="rpg-curr-pill gold" id="menu-gold-count" title="Altın">💰 12</span>
+            </div>
+            <div class="rpg-audio-mini">
+              <button id="btn-toggle-lang" class="rpg-icon-btn lang-pill-btn" title="Dili Değiştir / Switch Language">
+                🌐 <span id="current-lang-label">TR</span>
+              </button>
+              <button id="btn-menu-music" class="rpg-icon-btn" title="Orta Çağ Müziği Aç/Kapat">
+                🎵 <span id="menu-music-label" class="sr-only">Açık</span>
+              </button>
+              <button id="btn-menu-next-track" class="rpg-icon-btn" title="Sonraki Orijinal Parça (Kırık Arma / Lanetli Mahzen / Düşen Taçlar)">
+                ⏭️
+              </button>
+              <button id="btn-menu-sfx" class="rpg-icon-btn" title="Ses Efektleri Aç/Kapat">
+                🔊 <span id="menu-sfx-label" class="sr-only">Açık</span>
+              </button>
+              <button id="btn-menu-guide-top" class="rpg-icon-btn guide-glow" title="Oyun Rehberi & Nasıl Oynanır">
+                ❓
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. GAME LOGO & MODE SWITCHER -->
+        <div class="rpg-brand-banner">
+          <div class="rpg-title-row">
+            <span class="rpg-crest-ornament">⚜️</span>
+            <h1 class="main-game-title">CRYPT CLASH</h1>
+            <span class="rpg-crest-ornament">⚜️</span>
+          </div>
+          <div class="title-sub-text" id="main-game-sub">EFSANELERİN ZİNDANI • ZAR & TAKTİK RPG</div>
+
+          <!-- Interactive Soundtrack Banner -->
+          <div id="soundtrack-ticker" class="soundtrack-ticker" title="Parçayı Değiştirmek İçin Dokun">
+            <span class="music-wave-bars"><span></span><span></span><span></span></span>
+            <span id="soundtrack-title" class="soundtrack-title">🎵 Tavern of the Broken Crest</span>
+            <span class="track-skip-hint">⏭️ Değiştir</span>
+          </div>
+
+          <!-- Story vs Classic Mode Switcher -->
+          <div class="menu-mode-switcher">
+            <button id="btn-mode-story" class="mode-tab-btn active" title="Gezgin Şövalye Sir Elden Hikaye Modu">
+              📖 Hikaye Modu (Gezgin Şövalye)
+            </button>
+            <button id="btn-mode-classic" class="mode-tab-btn" title="Klasik Roguelike Hızlı Oyun">
+              ⚔️ Klasik Roguelike
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. LIVE ILLUSTRATED HERO & DUNGEON STAGE SHOWCASE CARD -->
+        <div class="rpg-stage-showcase" id="rpg-stage-showcase">
+          <div class="stage-bg-layer" id="menu-stage-bg" style="background-image: url('assets/stage_1.png');"></div>
+          <div class="stage-vignette"></div>
+
+          <!-- Top Stage Chapter Header -->
+          <div class="stage-top-bar">
+            <div class="stage-chapter-pill">
+              <span class="stage-live-dot"></span>
+              <span id="menu-current-chapter">Bölüm 1: Sular Altındaki Mahzen</span>
+            </div>
+            <button id="btn-stage-change-realm" class="stage-map-shortcut" title="Diyar Değiştir">
+              🗺️ Diyar Seç ▸
+            </button>
+          </div>
+
+          <!-- Center Animated Versus Stage (Sir Elden vs Current Chapter Monster) -->
+          <div class="stage-actors-row">
+            <div class="stage-actor hero-side" id="menu-hero-actor-click" title="Kahraman Envanteri ve Zırh Özelleştirme">
+              <div class="actor-pedestal hero-pedestal" id="menu-hero-pedestal"></div>
+              <img id="menu-stage-hero-img" src="assets/hero_knight.png" alt="Sir Elden" class="stage-sprite hero-sprite" />
+              <div class="actor-tag hero-tag" id="menu-stage-hero-tag">🛡️ Sir Elden (Envanter)</div>
+            </div>
+
+            <div class="stage-vs-emblem">
+              <span>⚔️</span>
+              <small id="menu-stage-room-label">Oda 1/5</small>
+            </div>
+
+            <div class="stage-actor enemy-side">
+              <div class="actor-pedestal enemy-pedestal"></div>
+              <img id="menu-stage-enemy-img" src="assets/enemy_skeleton.png" alt="Zindan Muhafızı" class="stage-sprite enemy-sprite" />
+              <div class="actor-tag enemy-tag" id="menu-stage-enemy-name">💀 İskelet & Engerek</div>
+            </div>
+          </div>
+
+          <!-- Bottom Stage Hero Loadout & Stats Strip -->
+          <div class="stage-loadout-strip">
+            <div class="loadout-pill" id="menu-hp-count" title="Mevcut Can">❤️ 28/28</div>
+            <div class="loadout-pill" id="menu-weapon-pill" title="Kuşanılan Silah">🗡️ Demir Kılıç</div>
+            <div class="loadout-pill" id="menu-helm-pill" title="Kuşanılan Miğfer / Kask">🪖 Demir Miğfer</div>
+            <div class="loadout-pill" id="menu-atk-pill" title="Toplam Saldırı Gücü">⚔️ +0 Güç</div>
+          </div>
+        </div>
+
+        <!-- 4. PRIMARY HEROIC CTA + HERO INVENTORY / TUTORIAL / QUESTS ROW -->
+        <div class="rpg-cta-section">
+          <button id="btn-menu-continue" class="rpg-play-cta-btn">
+            <div class="cta-shine"></div>
+            <span class="cta-sword-icon">⚔️</span>
+            <div class="cta-text-col">
+              <span class="btn-main-title">MACERAYA ATIL (100 BÖLÜM)</span>
+              <span class="btn-sub-title" id="menu-cta-sub">Zindanın derinliklerine in, Bosslardan eşya düşür!</span>
+            </div>
+            <span class="cta-arrow">➔</span>
+          </button>
+
+          <!-- Trio Feature Row: Hero Inventory (+Basma & Pet), Online Arena & Kule, Quests -->
+          <div class="rpg-feature-trio">
+            <button id="btn-menu-inventory" class="rpg-feature-card inventory-card">
+              <span class="feat-icon">⚒️</span>
+              <div class="feat-info">
+                <strong>DEMİRCİ & PET</strong>
+                <span>Envanter, +Basma & Yoldaş</span>
+              </div>
+              <span class="feat-tag loot-tag" id="menu-inventory-badge">EŞYA!</span>
+            </button>
+
+            <button id="btn-menu-arena" class="rpg-feature-card guide-card" style="border-color:rgba(59,182,255,0.6);background:linear-gradient(180deg, rgba(16,42,72,0.92), rgba(10,22,38,0.96));">
+              <span class="feat-icon">🌐</span>
+              <div class="feat-info">
+                <strong>ONLINE ARENA</strong>
+                <span>PvP Kupa & Sonsuz Kule</span>
+              </div>
+              <span class="feat-tag new-tag" id="menu-arena-badge">100🏆</span>
+            </button>
+
+            <button id="btn-menu-quests" class="rpg-feature-card quests-card">
+              <span class="feat-icon">🏆</span>
+              <div class="feat-info">
+                <strong>BAŞARIM & ÇARK</strong>
+                <span>Unvanlar & Kader Çarkı</span>
+              </div>
+              <span class="feat-tag reward-tag" id="menu-quests-badge">ÖDÜL!</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- DAILY RETENTION HUB: CROWN CHEST, 7-DAY LOGIN & AFK PATROL -->
+        <div class="rpg-retention-strip">
+          <div class="crown-chest-card" id="menu-crown-chest-card">
+            <div class="crown-chest-left">
+              <span class="crown-chest-icon">👑</span>
+              <div class="crown-chest-info">
+                <strong>KRALİYET TAÇ SANDIĞI</strong>
+                <span id="crown-chest-sub">5 Zafer Kazan • Altın & Taş Aç!</span>
+              </div>
+            </div>
+            <div class="crown-chest-right">
+              <div class="crown-slots-pills" id="crown-slots-pills">
+                <span class="crown-dot">⚪</span>
+                <span class="crown-dot">⚪</span>
+                <span class="crown-dot">⚪</span>
+                <span class="crown-dot">⚪</span>
+                <span class="crown-dot">⚪</span>
+              </div>
+              <button id="btn-open-crown-chest" class="crown-claim-btn" disabled>0/5</button>
+            </div>
+          </div>
+
+          <div class="retention-actions-row">
+            <button id="btn-menu-daily-login" class="retention-pill-btn calendar-pill">
+              <span class="ret-icon">📅</span>
+              <div class="ret-text">
+                <strong>7 Günlük Giriş</strong>
+                <span id="daily-login-status-label">1. Gün Hazır!</span>
+              </div>
+              <span class="ret-badge pulse-badge" id="daily-login-notif">ÖDÜL</span>
+            </button>
+
+            <button id="btn-menu-idle-patrol" class="retention-pill-btn patrol-pill">
+              <span class="ret-icon">🛡️</span>
+              <div class="ret-text">
+                <strong>Zindan Devriyesi</strong>
+                <span id="idle-patrol-status-label">AFK Ganimeti</span>
+              </div>
+              <span class="ret-badge" id="idle-patrol-notif">TOPLA</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- CLASH ROYALE STYLE 4 CHEST SLOTS ON MAIN MENU -->
+        <div class="menu-chest-dock">
+          <div class="menu-chest-dock-head">
+            <span class="menu-chest-head-title">📦 <span id="lbl-menu-chests">SANDIK YUVALARI</span></span>
+            <small id="menu-chest-status-note">Dokunarak Aç veya Kilit Başlat</small>
+          </div>
+          <div class="arena-chest-slots-grid menu-chest-grid" id="menu-chest-slots-grid">
+            <!-- 4 Chest Slots Rendered Live! -->
+          </div>
+        </div>
+
+        <!-- 5. MODERN 4-CARD BENTO NAVIGATION DOCK -->
+        <div class="rpg-bento-dock">
+          <button id="btn-menu-tree" class="bento-nav-card talent-bento">
+            <div class="bento-top">
+              <span class="bento-icon">🌳</span>
+              <span class="bento-badge" id="menu-tree-badge">0💎</span>
+            </div>
+            <strong class="bento-title">Yetenek Ağacı</strong>
+            <span class="bento-sub">Seviye & Rün Gücü</span>
+          </button>
+
+          <button id="btn-menu-chapters" class="bento-nav-card map-bento">
+            <div class="bento-top">
+              <span class="bento-icon">🗺️</span>
+              <span class="bento-badge" id="menu-chapters-badge">100 Bölüm</span>
+            </div>
+            <strong class="bento-title">10 Dünya & 100 Kat</strong>
+            <span class="bento-sub">Dünya & Bölüm Seç</span>
+          </button>
+
+          <button id="btn-menu-shop" class="bento-nav-card shop-bento">
+            <div class="bento-top">
+              <span class="bento-icon">🛒</span>
+              <span class="bento-badge" id="menu-shop-gold-badge">Market</span>
+            </div>
+            <strong class="bento-title">Zindan Marketi</strong>
+            <span class="bento-sub">Tılsım & Kılıçlar</span>
+          </button>
+
+          <button id="btn-menu-how-to-play" class="bento-nav-card bestiary-bento">
+            <div class="bento-top">
+              <span class="bento-icon">📖</span>
+              <span class="bento-badge">Rehber</span>
+            </div>
+            <strong class="bento-title">Nasıl Oynanır?</strong>
+            <span class="bento-sub">Taktik & Rehber</span>
+          </button>
+        </div>
+
+        <!-- 6. COMPACT FOOTER UTILITY BAR -->
+        <div class="rpg-menu-footer">
+          <button id="btn-menu-bestiary" class="footer-util-link">
+            📜 Canavar Ansiklopedisi
+          </button>
+          <span class="footer-dot">•</span>
+          <button id="btn-menu-install" class="footer-util-link">
+            📲 Mobil Kurulum
+          </button>
+          <span class="footer-dot">•</span>
+          <button id="btn-menu-reset" class="footer-util-link danger-link">
+            🔄 Sıfırla
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =========================================================
+         FULL VIEW: TALENT / SKILL TREE SCREEN
+         ========================================================= -->
+    <div id="scene-skill-tree" class="full-screen-scene hidden">
+      <div class="skill-tree-header">
+        <button id="btn-back-from-tree" class="nav-back-btn">◀ Geri</button>
+        <div class="tree-header-title">
+          <h2>GELİŞTİRME AĞACI</h2>
+          <div class="souls-gem-tracker">
+            <span>Ruh Taşları:</span>
+            <strong id="tree-souls-display">💎 0</strong>
+          </div>
+        </div>
+        <button id="btn-reset-talents" class="nav-sub-btn" title="Yetenekleri sıfırla ve taşları geri al">Sıfırla</button>
+      </div>
+
+      <div class="tree-container">
+        <!-- 3 Branch Tabs -->
+        <div class="tree-tabs-bar">
+          <button class="tree-tab-btn active" data-branch="warrior">🔴 Savaşçı</button>
+          <button class="tree-tab-btn" data-branch="guardian">🔵 Muhafız</button>
+          <button class="tree-tab-btn" data-branch="runic">🟣 Rün & Zar</button>
+        </div>
+
+        <!-- Talent Nodes Graph List -->
+        <div class="tree-nodes-scroll" id="tree-nodes-content"></div>
+
+        <!-- Node Detail & Purchase Box -->
+        <div class="tree-detail-card" id="tree-detail-card">
+          <div class="detail-badge" id="node-detail-category">SAVAŞÇI YOLU</div>
+          <h3 id="node-detail-title">Bir Yetenek Seç</h3>
+          <p id="node-detail-desc">Ağaçtaki bir yeteneğe dokunarak detayları incele ve Ruh Taşı ile kalıcı aç.</p>
+          <div class="detail-actions">
+            <span class="detail-cost" id="node-detail-cost">Maliyet: -</span>
+            <button id="btn-buy-talent" class="talent-unlock-btn" disabled>Aç (Kilitli)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         FULL VIEW: BESTIARY / CANAVAR ANSİKLOPEDİSİ
+         ========================================================= -->
+    <div id="scene-bestiary" class="full-screen-scene hidden">
+      <div class="bestiary-header">
+        <button id="btn-back-from-bestiary" class="nav-back-btn">◀ Geri</button>
+        <div class="bestiary-header-title">
+          <h2>CANAVAR ANSİKLOPEDİSİ</h2>
+          <span>Zindan Yaratıkları ve Kadim Bosslar</span>
+        </div>
+      </div>
+
+      <div class="bestiary-container">
+        <!-- Top Horizontal Monster Strip -->
+        <div class="bestiary-tabs-strip" id="bestiary-tabs-strip"></div>
+
+        <!-- Monster Detailed Showcase -->
+        <div class="bestiary-detail-view" id="bestiary-detail-view">
+          <div class="monster-pedestal">
+            <div class="pedestal-glow"></div>
+            <img id="bestiary-monster-img" class="bestiary-sprite" src="assets/monster_viper.png" alt="Canavar" />
+          </div>
+
+          <div class="bestiary-info-card">
+            <div class="bestiary-tag-row">
+              <span id="bestiary-chapter-tag" class="bestiary-tag chapter-tag">Bölüm 1: Sular Altındaki Mahzen</span>
+              <span id="bestiary-threat-tag" class="bestiary-tag threat-tag">💀 Standart</span>
+            </div>
+
+            <h3 id="bestiary-name" class="bestiary-monster-name">Kızıl Engerek Muhafızı</h3>
+            <p id="bestiary-lore" class="bestiary-lore">Zindanın yosunlu sularında yaşayan zehirli engerek muhafızı...</p>
+
+            <div class="bestiary-stats-grid">
+              <div class="b-stat">
+                <span class="b-label">❤️ Can (HP)</span>
+                <span id="bestiary-hp" class="b-val">40</span>
+              </div>
+              <div class="b-stat">
+                <span class="b-label">⚔️ Taban Hasar</span>
+                <span id="bestiary-dmg" class="b-val">6</span>
+              </div>
+              <div class="b-stat">
+                <span class="b-label">🎲 Çarpışma Zarı</span>
+                <span id="bestiary-clash" class="b-val">-1</span>
+              </div>
+              <div class="b-stat">
+                <span class="b-label">🏆 Katledilme</span>
+                <span id="bestiary-kills" class="b-val">0 Kez</span>
+              </div>
+            </div>
+
+            <div class="bestiary-strategy-box">
+              <div class="strat-title">⚔️ Savaş Taktiği & Zayıflık:</div>
+              <div id="bestiary-strategy" class="strat-text">Hızlı çift pala darbeleri vurur...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         FULL VIEW: STORY MODE DIALOGUE (Gezgin Şövalye Sir Elden)
+         ========================================================= -->
+    <div id="scene-story-dialogue" class="full-screen-scene hidden">
+      <div class="story-dialogue-container">
+        <div class="story-header-bar">
+          <button id="btn-back-from-story" class="nav-back-btn">◀ Geri</button>
+          <div class="story-header-title">
+            <span class="story-realm-tag" id="story-realm-tag">BÖLÜM 1: GİRİŞ</span>
+            <h2>GEZGİN ŞÖVALYE SIR ELDEN</h2>
+          </div>
+        </div>
+
+        <div class="story-scroll-view">
+          <div class="story-hero-frame">
+            <img src="assets/hero_knight.png" alt="Sir Elden" class="story-knight-portrait" />
+            <div class="story-knight-titleplate">
+              <span class="knight-rank">⚔️ GEZGİN ŞÖVALYE</span>
+              <strong class="knight-name">Sir Elden</strong>
+            </div>
+          </div>
+
+          <div class="story-parchment-box">
+            <div class="parchment-wax-seal">⚜️</div>
+            <h3 id="story-chapter-title" class="story-entry-heading">Mahzenin Girişi & Lanetli Kemikler</h3>
+            <p id="story-dialogue-text" class="story-lore-paragraph">
+              "Lanetli suların şapırtısı karanlık tonozlu dehlizlerde yankılanıyor. Yıllardır kayıp olan Kadim Kadeh'in izini sürerken, yosun kaplı basamaklardan aşağı indim. Zırhım soğuk sisle ıslandı; karanlıkta parıldayan kırmızı gözler ve kemik şakırtıları var. Karşıma dikilen ilk düşman: Lanetli bir İskelet!"
+            </p>
+          </div>
+
+          <!-- 3 Roleplay Knightly Preparation / Blessing Choices -->
+          <div class="story-blessing-section">
+            <div class="blessing-title">⚜️ ŞÖVALYE TAKDİSİ SEÇ (Bölüm Başı Bonusu)</div>
+            <div class="blessing-cards-list">
+              <button class="blessing-card-btn active" data-blessing="guardian" id="blessing-btn-guardian">
+                <span class="blessing-icon">🛡️</span>
+                <div class="blessing-info">
+                  <strong class="blessing-name">Kutsal Muhafız Yemini</strong>
+                  <span class="blessing-desc">+10 Mavi Kalkan ve +4 Maksimum Can kazan</span>
+                </div>
+              </button>
+
+              <button class="blessing-card-btn" data-blessing="warrior" id="blessing-btn-warrior">
+                <span class="blessing-icon">⚔️</span>
+                <div class="blessing-info">
+                  <strong class="blessing-name">Çelik ve Kan Kararlılığı</strong>
+                  <span class="blessing-desc">+2 Kalıcı Saldırı Bonusu ve 15 Altın</span>
+                </div>
+              </button>
+
+              <button class="blessing-card-btn" data-blessing="fate" id="blessing-btn-fate">
+                <span class="blessing-icon">🎲</span>
+                <div class="blessing-info">
+                  <strong class="blessing-name">Gezginin Talihi</strong>
+                  <span class="blessing-desc">+1 Ruh Taşı 💎 ve sonraki savaşta Zar 6 Garantisi</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottom Action Button -->
+          <div class="story-action-row">
+            <button id="btn-start-story-expedition" class="menu-action-btn primary pulse-glow">
+              <span class="menu-btn-icon">🗡️</span>
+              <div class="menu-btn-text">
+                <span class="btn-main-title">ZİNDANA ADIM AT</span>
+                <span class="btn-sub-title">Sir Elden ile savaşa başla</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         FULL VIEW: 10 WORLDS & 100 LEVELS BRANCHING MAP PORTAL
+         ========================================================= -->
+    <div id="scene-map-portal" class="full-screen-scene hidden">
+      <div class="map-portal-header">
+        <button id="btn-back-from-map" class="nav-back-btn">◀ Geri</button>
+        <div class="map-header-title">
+          <h2>10 DÜNYA VE 100 BÖLÜM HARİTASI</h2>
+          <span id="portal-selected-realm-name">Dünya 1 • Bölüm 1: Sular Altındaki Mahzen</span>
+        </div>
+      </div>
+
+      <div class="map-portal-container">
+        <!-- 10 Worlds Horizontal Selector Strip -->
+        <div class="worlds-selector-bar" id="worlds-selector-bar"></div>
+
+        <!-- 10 Levels within Selected World Strip (e.g. Bölüm 1..10, 11..20, ..., 91..100) -->
+        <div class="realm-tabs-scroll" id="realm-tabs-scroll"></div>
+
+        <!-- Branching Node Map Graph for the Active Level -->
+        <div class="branching-map-viewport">
+          <div class="branching-map-title">
+            <span id="branching-map-heading">🗺️ YOL AYRIMI VE ODA BAĞLANTILARI</span>
+            <small>Gitmek istediğin odaya dokun</small>
+          </div>
+          <div class="branching-nodes-container" id="branching-nodes-container"></div>
+        </div>
+
+        <!-- Realm Quick Details & Jump Buttons -->
+        <div class="realm-details-card" id="realm-details-card">
+          <div class="realm-details-head">
+            <span class="realm-badge" id="map-card-badge">DÜNYA 1 • BÖLÜM 1/100</span>
+            <h3 id="map-card-title">Sular Altındaki Mahzen</h3>
+          </div>
+          <p id="map-card-desc" class="realm-lore-snippet">
+            Yosunlu taş basamaklar, zehirli bataklık suları ve üç başlı Hidra Tiranı Vex'in inine giden karanlık geçitler.
+          </p>
+          <div class="realm-action-buttons">
+            <button id="btn-map-start-dungeon" class="map-jump-btn primary">⚔️ Bu Bölüme Gir (Oda 1)</button>
+            <button id="btn-map-boss-dungeon" class="map-jump-btn boss">👑 Boss Kapısı & Ganimet</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         FULL VIEW: HERO INVENTORY & CHARACTER CUSTOMIZATION
+         (#scene-hero-inventory)
+         ========================================================= -->
+    <div id="scene-hero-inventory" class="full-screen-scene hidden">
+      <div class="inv-header">
+        <button id="btn-back-from-inventory" class="nav-back-btn">◀ Geri</button>
+        <div class="inv-header-title">
+          <h2>ENVANTER, DEMİRCİ (+BASMA) & YOLDAŞ</h2>
+          <span>Eşya kuşan, Demircide +1..+5 güçlendir ve Savaş Yoldaşı (Pet) seç!</span>
+        </div>
+      </div>
+
+      <div class="inv-container">
+        <!-- Top Hero Live Preview Showcase & 4 Equipped Slots -->
+        <div class="inv-hero-showcase">
+          <!-- Left 2 Equipped Slots (Helm & Armor) -->
+          <div class="inv-equip-col">
+            <div class="inv-equip-slot active" data-slot="helm" id="inv-eq-slot-helm" title="Miğfer / Kask Yuvası">
+              <span class="eq-slot-label">MİĞFER</span>
+              <span class="eq-slot-icon" id="inv-eq-icon-helm">🪖</span>
+              <small class="eq-slot-name" id="inv-eq-name-helm">Demir Miğfer</small>
+            </div>
+            <div class="inv-equip-slot" data-slot="armor" id="inv-eq-slot-armor" title="Zırh / Pelerin Yuvası">
+              <span class="eq-slot-label">ZIRH</span>
+              <span class="eq-slot-icon" id="inv-eq-icon-armor">🛡️</span>
+              <small class="eq-slot-name" id="inv-eq-name-armor">Gezgin Zırhı</small>
+            </div>
+          </div>
+
+          <!-- Center Live Hero Pedestal with Aura, Helmet Badge & Active Pet Companion -->
+          <div class="inv-hero-pedestal-box" id="inv-hero-pedestal-box">
+            <div class="inv-aura-ring" id="inv-aura-ring"></div>
+            <img id="inv-hero-preview-img" src="assets/hero_front.png" alt="Sir Elden" class="inv-hero-sprite" />
+            <div class="inv-helm-floating-badge" id="inv-helm-floating-badge">🪖</div>
+            <div class="inv-pet-floating-badge" id="inv-pet-floating-badge" title="Aktif Savaş Yoldaşı">
+              <img id="inv-pet-badge-img" src="assets/pet_dragon.png" alt="Pet" class="inv-pedestal-pet-img" />
+            </div>
+            <div class="inv-hero-title-tag" id="inv-hero-skin-title">Sir Elden • Gezgin Zırhı</div>
+          </div>
+
+          <!-- Right 2 Equipped Slots (Weapon & Cape/Aura) -->
+          <div class="inv-equip-col">
+            <div class="inv-equip-slot" data-slot="weapon" id="inv-eq-slot-weapon" title="Kılıç / Silah Yuvası">
+              <span class="eq-slot-label">SİLAH</span>
+              <span class="eq-slot-icon" id="inv-eq-icon-weapon">🗡️</span>
+              <small class="eq-slot-name" id="inv-eq-name-weapon">Demir Kılıç</small>
+            </div>
+            <div class="inv-equip-slot" data-slot="cape" id="inv-eq-slot-cape" title="Pelerin & Aura Görünümü">
+              <span class="eq-slot-label">AURA / SÜS</span>
+              <span class="eq-slot-icon" id="inv-eq-icon-cape">🧣</span>
+              <small class="eq-slot-name" id="inv-eq-name-cape">Şövalye Pelerini</small>
+            </div>
+            <div class="inv-equip-slot" data-slot="pet" id="inv-eq-slot-pet" title="Savaş Yoldaşı (Pet) Yuvası" style="border-color:#10b981;">
+              <span class="eq-slot-label" style="color:#6ee7b7;">YOLDAŞ</span>
+              <span class="eq-slot-icon" id="inv-eq-icon-pet">
+                <img id="inv-eq-pet-img" src="assets/pet_dragon.png" alt="Pet" class="inv-slot-pet-img" />
+              </span>
+              <small class="eq-slot-name" id="inv-eq-name-pet">Kızıl Ejder</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Gear Bonus Bar -->
+        <div class="inv-stats-summary" id="inv-stats-summary">
+          <span>❤️ Can: <b id="inv-stat-hp">+0</b></span>
+          <span>⚔️ Hasar: <b id="inv-stat-atk">+0</b></span>
+          <span>🛡️ Kalkan: <b id="inv-stat-shield">+0</b></span>
+          <span>🎲 Çarpışma: <b id="inv-stat-clash">+0</b></span>
+          <span>🐉 Pet: <b id="inv-stat-pet">Aktif</b></span>
+        </div>
+
+        <!-- Category Filter Tabs (Helm, Armor, Weapon, Cape, Pet Companion, Collection Album) -->
+        <div class="inv-Slot-tabs">
+          <button class="inv-tab-btn active" data-slot="helm" data-islot="helm">🪖 Miğfer</button>
+          <button class="inv-tab-btn" data-slot="armor" data-islot="armor">🛡️ Zırh</button>
+          <button class="inv-tab-btn" data-slot="weapon" data-islot="weapon">🗡️ Silah</button>
+          <button class="inv-tab-btn" data-slot="cape" data-islot="cape">✨ Aura</button>
+          <button class="inv-tab-btn" data-slot="pet" data-islot="pet">🐉 Yoldaş (Pet)</button>
+          <button class="inv-tab-btn" data-slot="collection" data-islot="collection" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color:#fff; font-weight:800;">🃏 Koleksiyon</button>
+        </div>
+
+        <!-- Scrollable Gear & Blacksmith Upgrade Grid -->
+        <div class="inv-items-list" id="inv-items-list"></div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         FULL VIEW: HOW TO PLAY / OYUN REHBERİ VE ANLATIM
+         ========================================================= -->
+    <div id="scene-how-to-play" class="full-screen-scene hidden">
+      <div class="guide-header">
+        <button id="btn-back-from-guide" class="nav-back-btn">◀ Geri</button>
+        <div class="guide-header-title">
+          <h2>OYUN REHBERİ & TAKTİK ANLATIM</h2>
+          <span>Crypt Clash Mekanikleri ve Savaş Sanatı</span>
+        </div>
+      </div>
+
+      <div class="guide-container">
+        <!-- 4 Category Tabs -->
+        <div class="guide-tabs-bar">
+          <button class="guide-tab-btn active" data-gtab="clash">⚔️ 1. Çarpışma</button>
+          <button class="guide-tab-btn" data-gtab="cards">🎲 2. Kart & Kombo</button>
+          <button class="guide-tab-btn" data-gtab="tactics">🎯 3. Hedef & Tılsım</button>
+          <button class="guide-tab-btn" data-gtab="rooms">🏰 4. 100 Bölüm & Envanter</button>
+        </div>
+
+        <!-- Tab 1: Clash Mechanics -->
+        <div class="guide-tab-panel active" id="gtab-panel-clash">
+          <div class="guide-hero-banner">
+            <div class="guide-banner-icon">⚔️</div>
+            <div>
+              <h3>Adım 1: Zarları Yerleştir ve Çarpıştır!</h3>
+              <p>Her tur eline <b>Taktik Zarları</b> (1-6 arası) gelir. Bu zarları kartlara sürüklediğinde tur başlar ve üstteki <b>Çarpışma Paneli (Clash)</b> tetiklenir!</p>
+            </div>
+          </div>
+
+          <div class="guide-step-cards">
+            <div class="guide-card">
+              <div class="g-card-num">1</div>
+              <div class="g-card-body">
+                <strong>Üst Çarpışma (Clash) Nedir?</strong>
+                <p>Sen zarını bir karta yerleştirdiğinde, üst panelde senin <b>2 Çarpışma Zarın</b> ile düşmanın <b>2 Çarpışma Zarı</b> otomatik atılır ve toplamları karşılaştırılır.</p>
+              </div>
+            </div>
+
+            <div class="guide-card highlight-green">
+              <div class="g-card-num">🏆</div>
+              <div class="g-card-body">
+                <strong>Çarpışmayı Kazanırsan (Senin Toplamın > Düşman):</strong>
+                <p>Saldırın güçlenir (<b>+3 veya +5 Kritik Hasar</b>) ve karşı darbe almazsın!</p>
+              </div>
+            </div>
+
+            <div class="guide-card highlight-red">
+              <div class="g-card-num">🛡️</div>
+              <div class="g-card-body">
+                <strong>Çarpışmayı Kaybedersen (Düşman Toplamı > Senin):</strong>
+                <p>Kartın yine çalışır ama düşman sana anında karşı darbe indirir. Miğfer, Zırh ve Rün kartları çarpışma zarını yükseltir!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Cards & Combos -->
+        <div class="guide-tab-panel hidden" id="gtab-panel-cards">
+          <div class="guide-hero-banner">
+            <div class="guide-banner-icon">🎲</div>
+            <div>
+              <h3>3 Taktik Kartı & Özel Zar Etkileri</h3>
+              <p>Zarlarını sürüklediğin karta göre Sir Elden farklı eylemler yapar.</p>
+            </div>
+          </div>
+
+          <div class="guide-step-cards">
+            <div class="guide-card">
+              <div class="g-card-icon">🗡️</div>
+              <div class="g-card-body">
+                <strong>SALDIRI KARTI (Kırmızı):</strong>
+                <p>Koyduğun zarın değeri + Kılıç Gücün kadar seçili düşmana <b>fiziksel hasar</b> verir. <b>Zar 6</b> koyarsan düşmana <b>🩸 Kanama (+3)</b> uygular!</p>
+              </div>
+            </div>
+
+            <div class="guide-card">
+              <div class="g-card-icon">🧪</div>
+              <div class="g-card-body">
+                <strong>ŞİFA KARTI (Yeşil):</strong>
+                <p>Can yeniler; canın tam doluysa taşan miktar otomatik <b>🛡️ Mavi Kalkan</b> olur. <b>Çift zar (2, 4, 6)</b> koyarsan <b>+3 Çift Kombo</b> şifası verir!</p>
+              </div>
+            </div>
+
+            <div class="guide-card">
+              <div class="g-card-icon">🔮</div>
+              <div class="g-card-body">
+                <strong>RÜN KARTI (Mor):</strong>
+                <p>Düşmana Rün Yıldırımı çakar, <b>Çarpışma Zarını zayıflatır</b> ve 2 düşmanlı odalarda diğer düşmana da <b>⚡ Zincirleme Yıldırım</b> sıçratır! <b>Tek zar (1, 3, 5)</b> koyarsan +3 bonus vurur.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Dual Enemies & Relics -->
+        <div class="guide-tab-panel hidden" id="gtab-panel-tactics">
+          <div class="guide-hero-banner">
+            <div class="guide-banner-icon">🎯</div>
+            <div>
+              <h3>Çift Düşman Hedefleme & Kadim Tılsımlar</h3>
+              <p>Bazı odalarda karşına aynı anda <b>2 farklı düşman</b> (Örn: İskelet + Engerek) çıkar. Hangisine vuracağını sen seçersin!</p>
+            </div>
+          </div>
+
+          <div class="guide-step-cards">
+            <div class="guide-card">
+              <div class="g-card-icon">🎯</div>
+              <div class="g-card-body">
+                <strong>Hedef Seçimi (2 Düşmanlı Savaşlar):</strong>
+                <p>Üstteki düşman can kutularına veya sahnedeki canavarın üzerine dokunarak <b>🎯 Hedef İmleci</b>ni değiştirebilirsin.</p>
+              </div>
+            </div>
+
+            <div class="guide-card">
+              <div class="g-card-icon">🩸</div>
+              <div class="g-card-body">
+                <strong>Sol Alttaki Tılsım (Relic) Yuvası:</strong>
+                <p>Sol alt köşedeki <b>Tılsım Yuvasına</b> her tur 1 zar sürükleyip bırakarak özel tılsım gücünü (Kan Taşı, Rün Kalkanı, Vampir Yüzüğü, Simya Küresi) tetikleyebilirsin!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: 100 Levels & Boss Gear Drops -->
+        <div class="guide-tab-panel hidden" id="gtab-panel-rooms">
+          <div class="guide-hero-banner">
+            <div class="guide-banner-icon">🏰</div>
+            <div>
+              <h3>10 Dünya, 100 Bölüm & Boss Ekipman Düşürme</h3>
+              <p>Oyun <b>10 farklı Dünya (Diyar)</b> ve toplam <b>100 Bölüm</b>den oluşur! Her dünyada mekan, atmosfer ve düşman güçleri değişir.</p>
+            </div>
+          </div>
+
+          <div class="guide-step-cards">
+            <div class="guide-card">
+              <div class="g-card-icon">🪖</div>
+              <div class="g-card-body">
+                <strong>Bosslardan Düşen Eşyalar & Karakter Özelleştirme:</strong>
+                <p>Bölüm sonu Bosslarını ve Hazine Sandıklarını açtığında <b>Efsanevi Miğferler (Kask), Zırhlar, Kılıçlar ve Auralar</b> düşer! Ana menüdeki <b>🛡️ ENVANTER & ZIRH</b> ekranından karakterinin görünümünü ve ekipmanlarını özelleştirebilirsin.</p>
+              </div>
+            </div>
+
+            <div class="guide-card">
+              <div class="g-card-icon">🌍</div>
+              <div class="g-card-body">
+                <strong>10 Dünya & 100 Bölüm İlerlemesi:</strong>
+                <p>Her Dünya 10 Bölümden oluşur (Bölüm 1-10: Batık Mahzen, Bölüm 11-20: Kemik Katedrali ... Bölüm 91-100: Sonsuz Boşluk Tahtı). İstediğin dünyaya ve bölüme <b>🗺️ Harita</b> ekranından geçiş yapabilirsin!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Interactive Coach Mode Toggle & Start Button -->
+        <div class="guide-footer-bar">
+          <label class="coach-toggle-label">
+            <input type="checkbox" id="chk-coach-mode" checked />
+            <span>🧙‍♂️ Savaşta <b>Adım Adım Canlı İpucu Rehberi</b>ni Göster</span>
+          </label>
+          <button id="btn-guide-start-play" class="rpg-play-cta-btn compact-cta">
+            ⚔️ ANLADIM, SAVAŞA GEÇ!
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         FULL VIEW: KNIGHT QUESTS, ACHIEVEMENTS & DAILY FORTUNE
+         ========================================================= -->
+    <div id="scene-quests" class="full-screen-scene hidden">
+      <div class="quests-header">
+        <button id="btn-back-from-quests" class="nav-back-btn">◀ Geri</button>
+        <div class="quests-header-title">
+          <h2>🏆 BAŞARIMLAR & KADER ÇARKI</h2>
+          <span>Başarımları aç, Unvan kuşan, Altın 💰 ve Ruh Taşı 💎 topla!</span>
+        </div>
+        <button id="btn-claim-all-quests" class="nav-sub-btn hidden" title="Tamamlanan tüm ödülleri tek tıkla topla">Tümünü Al</button>
+      </div>
+
+      <div class="quests-container">
+        <!-- Daily Fortune Wheel & Streak Card -->
+        <div class="daily-fortune-card" id="daily-fortune-card">
+          <div class="fortune-wheel-left">
+            <div class="fortune-wheel-graphic" id="fortune-wheel-graphic">🎡</div>
+            <span class="fortune-streak-pill" id="fortune-streak-pill">🔥 1. Gün</span>
+          </div>
+          <div class="fortune-info-mid">
+            <strong>ŞÖVALYE KADER ÇARKI</strong>
+            <span id="fortune-status-desc">Çarkı çevir; bedava Altın, Ruh Taşı veya Nadir Boss Eşyası kazan!</span>
+          </div>
+          <button id="btn-spin-fortune" class="fortune-spin-btn">ÇEVİR!</button>
+        </div>
+
+        <!-- Summary Banner -->
+        <div class="quests-summary-banner">
+          <div class="q-sum-stat">
+            <span>Açılan Başarım</span>
+            <strong id="quests-completed-count">0 / 16</strong>
+          </div>
+          <div class="q-sum-stat">
+            <span>Aktif Unvanın</span>
+            <strong id="quests-active-title" style="color:#ffd54f;">Gezgin Şövalye</strong>
+          </div>
+          <div class="q-sum-stat">
+            <span>Hazinen</span>
+            <strong id="quests-wallet-display">💎 0 • 💰 12</strong>
+          </div>
+        </div>
+
+        <!-- Category Filter Tabs -->
+        <div class="quests-cat-tabs" id="quests-cat-tabs">
+          <button class="q-cat-btn active" data-qcat="all">🌟 Tümü</button>
+          <button class="q-cat-btn" data-qcat="combat">⚔️ Savaş</button>
+          <button class="q-cat-btn" data-qcat="boss">👑 Boss & Dünya</button>
+          <button class="q-cat-btn" data-qcat="collection">🛡️ Koleksiyon</button>
+        </div>
+
+        <div class="quests-list-scroll" id="quests-list-scroll"></div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         FULL VIEW: ONLINE ARENA, PVP MATCHMAKING & ENDLESS TOWER
+         ========================================================= -->
+    <div id="scene-arena" class="full-screen-scene hidden">
+      <div class="quests-header arena-header">
+        <button id="btn-back-from-arena" class="nav-back-btn">◀ Geri</button>
+        <div class="quests-header-title">
+          <h2>🌐 ONLINE ARENA & SONSUZ KULE</h2>
+          <span>Diğer oyuncularla yarış, yakın seviyelerle PvP savaş yap ve Kupa 🏆 kazan!</span>
+        </div>
+      </div>
+
+      <div class="quests-container arena-container">
+        <!-- Online Player Profile & Nickname Bar -->
+        <div class="arena-profile-card">
+          <div class="arena-profile-left">
+            <span class="arena-online-dot"></span>
+            <div>
+              <div class="arena-nick-row">
+                <strong id="arena-player-nick">Sir Elden</strong>
+                <button id="btn-edit-nick" class="arena-nick-edit-btn" title="Oyuncu Adını Değiştir">✏️ Ad</button>
+                <button id="btn-claim-league-chest" class="arena-nick-edit-btn" style="border-color:#fbbf24;color:#fde047;background:rgba(234,179,8,0.2);" title="Lig Kupa Sandığını Aç">🎁 Lig Sandığı</button>
+              </div>
+              <span class="arena-league-label" id="arena-league-label">🥉 Bronz Lig • Seviye 1</span>
+            </div>
+          </div>
+          <div class="arena-profile-stats">
+            <div class="arena-stat-pill">
+              <small>Kupa Puanı</small>
+              <strong id="arena-trophy-count">🏆 100</strong>
+            </div>
+            <div class="arena-stat-pill">
+              <small>En Yüksek Kule</small>
+              <strong id="arena-best-tower" style="color:#52e5ff;">🗼 Kat 1</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLASH ROYALE STYLE KUPA YOLU (TROPHY ROAD) -->
+        <div class="arena-trophy-road-card">
+          <div class="trophy-road-header">
+            <span>🏆 KUPA YOLU (SEZON GANİMETLERİ)</span>
+            <small id="trophy-road-progress">100 🏆</small>
+          </div>
+          <div class="trophy-road-track-scroll" id="trophy-road-track-scroll">
+            <!-- Dynamically populated trophy milestones -->
+          </div>
+        </div>
+
+        <!-- CLASH ROYALE STYLE 4-CHEST SLOTS DOCK -->
+        <div class="arena-chest-dock-card">
+          <div class="arena-chest-dock-title">
+            <span>📦 SAVAŞ SANDIK YUVALARI (4 SLOT)</span>
+            <small id="chest-dock-status">Zaferlerden Sandık Kazan!</small>
+          </div>
+          <div class="arena-chest-slots-grid" id="arena-chest-slots-grid">
+            <!-- 4 Chest Slots Dynamically Injected -->
+          </div>
+        </div>
+
+        <!-- 4 Online Arena Mode Tabs -->
+        <div class="quests-cat-tabs" id="arena-mode-tabs" style="grid-template-columns: repeat(4, 1fr);">
+          <button class="arena-tab-btn active" data-atab="pvp">⚔️ Online PvP</button>
+          <button class="arena-tab-btn" data-atab="tower">🗼 Sonsuz Kule</button>
+          <button class="arena-tab-btn" data-atab="raid">🐉 Klan & Boss</button>
+          <button class="arena-tab-btn" data-atab="leaderboard">🏅 Sıralama</button>
+        </div>
+
+        <!-- TAB 1: ONLINE PVP MATCHMAKING (NEAR-LEVEL RIVALS) -->
+        <div class="arena-tab-panel" id="arena-panel-pvp">
+          <div class="arena-banner-box pvp-banner">
+            <div class="arena-banner-info">
+              <strong>⚔️ EŞLEŞTİRME ARENASI (YAKIN SEVİYE DÜELLOSU)</strong>
+              <p>Senin seviyene yakın (<b>±1 Seviye</b>) online şövalyelerle zar ve zırh düellosuna gir! Kazanan <b>+25 Kupa 🏆, Altın 💰, Ruh Taşı 💎 ve Nadir Sandık</b> alır!</p>
+            </div>
+            <button id="btn-refresh-opponents" class="fortune-spin-btn" style="font-size:11px;padding:8px 11px;">🔄 Rakip Bul</button>
+          </div>
+
+          <div class="arena-opponents-list" id="arena-opponents-list"></div>
+        </div>
+
+        <!-- TAB 2: ENDLESS BLOOD TOWER (SONSUZ KAN KULESİ) -->
+        <div class="arena-tab-panel hidden" id="arena-panel-tower">
+          <div class="arena-banner-box tower-banner">
+            <div class="arena-banner-info">
+              <strong>🗼 SONSUZ KAN KULESİ (KAT REKORU YARIŞI)</strong>
+              <p>Durmaksızın zorlaşan katlara tırman! Her katta <b>Altın, Ruh Taşı ve +15 Kupa 🏆</b> kazanırsın. Her 5 katta bir <b>Efsanevi Boss Ganimeti</b> düşer!</p>
+              <div class="tower-live-badges">
+                <span id="tower-current-floor-pill">📍 Mevcut Kat: 1</span>
+                <span id="tower-best-floor-pill">👑 Rekorun: Kat 1</span>
+              </div>
+            </div>
+            <button id="btn-start-tower-climb" class="fortune-spin-btn">🗼 TIRMAN!</button>
+          </div>
+
+          <div class="tower-milestones-list" id="tower-milestones-list"></div>
+        </div>
+
+        <!-- TAB 3: ONLINE GUILD & WORLD BOSS RAID (KLAN & DÜNYA EJDERİ BASKINI) -->
+        <div class="arena-tab-panel hidden" id="arena-panel-raid">
+          <div class="arena-banner-box tower-banner" style="border-color:#a855f7;background:linear-gradient(135deg, rgba(59,7,100,0.92), rgba(15,23,42,0.96));">
+            <div class="arena-banner-info">
+              <strong id="guild-banner-title">🛡️ KLAN: KIZIL KUZGUNLAR BİRLİĞİ</strong>
+              <p>Klan üyeleriyle birlikte <b>Kadim Dünya Ejderi Ignis-Rex</b>'e saldır! Verdiğin her hasar klan sandığını doldurur; <b>Altın, Ruh Taşı, +30 Kupa 🏆 ve Mitik Eşya</b> kazandırır!</p>
+              <div class="tower-live-badges">
+                <span id="raid-boss-hp-pill" style="border-color:#c084fc;color:#e9d5ff;">🐲 Dünya Boss Canı: 2500 / 2500</span>
+                <span id="raid-your-dmg-pill" style="border-color:#fde047;color:#fef08a;">⚔️ Senin Katkın: 0 Hasar</span>
+              </div>
+            </div>
+            <button id="btn-start-world-raid" class="fortune-spin-btn">🐉 BASKINA GİR!</button>
+          </div>
+
+          <div class="arena-opponents-list" id="guild-raid-members-list"></div>
+        </div>
+
+        <!-- TAB 4: GLOBAL ONLINE LEADERBOARDS (KULE & KUPA SIRALAMASI) -->
+        <div class="arena-tab-panel hidden" id="arena-panel-leaderboard">
+          <div class="leaderboard-subtabs">
+            <button class="lb-sub-btn active" data-lbtype="trophies">🏆 Kupa Ligi Sıralaması</button>
+            <button class="lb-sub-btn" data-lbtype="tower">🗼 Sonsuz Kule Rekorları</button>
+          </div>
+          <div class="arena-leaderboard-list" id="arena-leaderboard-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       WEB FAST-TEST & DEVELOPER FLOATING TOOLBAR
+       ========================================================= -->
+  <div id="web-debug-container" class="web-debug-container">
+    <button id="btn-toggle-debug" class="web-debug-toggle-btn" title="Web Hızlı Test Konsolunu Aç/Kapat">
+      🛠️ Web Test
+    </button>
+    <div id="web-debug-panel" class="web-debug-panel hidden">
+      <div class="web-debug-header">
+        <span>🛠️ Web Test Araçları</span>
+        <button id="btn-close-debug-panel" class="dbg-close-btn">✕</button>
+      </div>
+      <div class="web-debug-grid">
+        <button class="dbg-btn" id="dbg-add-gold">💰 +100 Altın</button>
+        <button class="dbg-btn" id="dbg-add-gems">💎 +10 Taş</button>
+        <button class="dbg-btn" id="dbg-add-trophies">🏆 +50 Kupa</button>
+        <button class="dbg-btn" id="dbg-add-crown">👑 +1 Taç</button>
+        <button class="dbg-btn" id="dbg-drop-chest">📦 Sandık Düşür</button>
+        <button class="dbg-btn" id="dbg-next-day">📅 Günü İlerlet</button>
+        <button class="dbg-btn" id="dbg-sim-afk">💤 3 Saat AFK</button>
+        <button class="dbg-btn" id="dbg-heal">❤️ Can Doldur</button>
+        <button class="dbg-btn" id="dbg-win-room">⚔️ Odayı Geç</button>
+        <button class="dbg-btn danger" id="dbg-reset">🔄 Sıfırla</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="audio.js?v=5.1"></script>
+  <script src="game.js?v=5.1"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js?v=5.1').then((reg) => {
+          if (reg && reg.update) reg.update();
+        }).catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
