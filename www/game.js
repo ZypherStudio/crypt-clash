@@ -1,4 +1,4 @@
-// CRYPT CLASH: Mobile Edition (iOS & Android PWA + Capacitor Ready)
+// CRYPT CLASH: Dungeon of Legends (Android & iOS Native Mobile Release v1.0.0)
 
 const SAVE_KEY = 'crypt_clash_save_v2';
 
@@ -20,7 +20,7 @@ const I18N = {
     howToPlay: 'Nasıl Oynanır?',
     howToPlaySub: 'Taktik & Rehber',
     bestiary: '📜 Canavar Ansiklopedisi',
-    mobileInstall: '📲 Mobil Kurulum',
+    mobileInstall: '🛡️ Gizlilik & Kayıt',
     resetProgress: '🔄 Sıfırla',
     crownChestTitle: 'KRALİYET TAÇ SANDIĞI',
     crownChestSub: '5 Zafer Kazan • Altın & Taş Aç!',
@@ -60,7 +60,7 @@ const I18N = {
     howToPlay: 'How to Play',
     howToPlaySub: 'Tactics & Guide',
     bestiary: '📜 Monster Bestiary',
-    mobileInstall: '📲 Mobile Install',
+    mobileInstall: '🛡️ Privacy & Save',
     resetProgress: '🔄 Reset',
     crownChestTitle: 'ROYAL CROWN CHEST',
     crownChestSub: 'Win 5 Battles • Unlock Gold & Gems!',
@@ -1481,12 +1481,6 @@ class CryptClashGame {
   constructor() {
     this.canvas = document.getElementById('battle-canvas');
     this.ctx = this.canvas.getContext('2d');
-    this.deferredInstallPrompt = null;
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      this.deferredInstallPrompt = e;
-    });
 
     this.images = {};
     this.loadAssets();
@@ -2724,9 +2718,6 @@ class CryptClashGame {
     if (btnNextTrack) btnNextTrack.addEventListener('click', () => this.skipToNextTrack());
     const ticker = document.getElementById('soundtrack-ticker');
     if (ticker) ticker.addEventListener('click', () => this.skipToNextTrack());
-
-    // Web Testing Floating Console Dock
-    this.setupWebDebugDock();
   }
 
   // =========================================================
@@ -6314,7 +6305,7 @@ class CryptClashGame {
   }
 
   // =========================================================
-  // MOBILE INSTALL MODAL (iOS & ANDROID)
+  // MOBILE PRIVACY POLICY & CLOUD/LOCAL SAVE INFO MODAL
   // =========================================================
   openMobileInstallModal() {
     if (this.state.busy) return;
@@ -6323,56 +6314,53 @@ class CryptClashGame {
     const sub = document.getElementById('modal-subtitle');
     const content = document.getElementById('modal-content');
     const closeBtn = document.getElementById('modal-close-btn');
+    const isEn = this.state.lang === 'en';
 
-    title.textContent = '📲 MOBİL OYUN KURULUMU';
-    sub.textContent = 'Oyun hem Android hem Apple (iOS) için tam ekran ve çevrimdışı (offline) çalışacak şekilde hazırlandı:';
+    title.textContent = isEn ? '🛡️ PRIVACY & SAVE STATUS' : '🛡️ GİZLİLİK & KAYIT DURUMU';
+    sub.textContent = isEn
+      ? 'Crypt Clash: Dungeon of Legends (Official Mobile Release v1.0.0 - Zypher Studio)'
+      : 'Crypt Clash: Efsanelerin Zindanı (Resmi Mobil Sürüm v1.0.0 - Zypher Studio)';
     closeBtn.classList.remove('hidden');
-    closeBtn.textContent = 'Kapat';
+    closeBtn.textContent = isEn ? 'Close' : 'Kapat';
 
     content.innerHTML = `
       <div class="shop-item active-chapter">
         <div class="shop-item-info">
-          <div class="shop-item-icon">🤖</div>
-          <div>
-            <div class="shop-item-title">Android Kurulumu (Tek Tık / APK)</div>
-            <div class="shop-item-desc">Chrome menüsünden "Uygulamayı Yükle" seçebilir veya Capacitor <b>android/</b> klasörüyle doğrudan <b>.apk</b> derleyebilirsin.</div>
-          </div>
-        </div>
-        <button class="shop-buy-btn" id="btn-trigger-pwa">Yükle</button>
-      </div>
-
-      <div class="shop-item">
-        <div class="shop-item-info">
-          <div class="shop-item-icon">🍎</div>
-          <div>
-            <div class="shop-item-title">iPhone / iPad (Ücretsiz Kurulum)</div>
-            <div class="shop-item-desc">Apple Developer hesabı gerekmeden: Safari'de <b>Paylaş (⬆️) ➔ Ana Ekrana Ekle</b> butonuna bas. Özel ikonuyla tam ekran oyun olarak kurulur! Ayrıca <b>ios/</b> Xcode projesi de hazır.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="shop-item">
-        <div class="shop-item-info">
           <div class="shop-item-icon">💾</div>
           <div>
-            <div class="shop-item-title">Otomatik Kayıt Aktif</div>
-            <div class="shop-item-desc">Seviyen (Lv.${this.state.level}), Altının (${this.state.gold}G) ve Bölümün telefonda otomatik kaydedilir.</div>
+            <div class="shop-item-title">${isEn ? 'Automatic Device Save Active' : 'Cihaz İçi Otomatik Kayıt Aktif'}</div>
+            <div class="shop-item-desc">${isEn
+              ? `Your Knight (Lv.${this.state.level}), Gold (${this.state.gold}💰), Soul Gems (${this.state.soulGems}💎), Trophies (${this.state.trophies || 100}🏆), Pets and Equipment are saved automatically on your device.`
+              : `Şövalye Seviyen (Lv.${this.state.level}), Altının (${this.state.gold}💰), Ruh Taşın (${this.state.soulGems}💎), Kupan (${this.state.trophies || 100}🏆), Petlerin ve Ekipmanların cihazında anlık olarak otomatik kaydedilir.`}</div>
           </div>
         </div>
-        <button class="shop-buy-btn" id="btn-reset-save" style="background:#8b1e1e;color:#fff;border-color:#ff8a80;">Sıfırla</button>
+      </div>
+
+      <div class="shop-item">
+        <div class="shop-item-info">
+          <div class="shop-item-icon">🛡️</div>
+          <div>
+            <div class="shop-item-title">${isEn ? 'Google Play Privacy & Data Safety' : 'Google Play Gizlilik & Veri Güvenliği'}</div>
+            <div class="shop-item-desc">${isEn
+              ? 'Crypt Clash does not collect personal data, location, contacts, or camera permissions. All progress is stored securely on your mobile device.'
+              : 'Crypt Clash kişisel verilerinizi, konumunuzu, rehberinizi veya kamera/mikrofon izinlerinizi talep etmez ve üçüncü taraflarla paylaşmaz.'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="shop-item">
+        <div class="shop-item-info">
+          <div class="shop-item-icon">🔄</div>
+          <div>
+            <div class="shop-item-title">${isEn ? 'Reset Current Run' : 'Mevcut Seferi Sıfırla'}</div>
+            <div class="shop-item-desc">${isEn
+              ? 'Restart from Floor 1 while keeping your unlocked Talents, Gear, and Pets.'
+              : 'Kazanılan Ruh Taşların, Yeteneklerin ve Ekipmanların korunarak 1. Bölümden yeni sefer başlatır.'}</div>
+          </div>
+        </div>
+        <button class="shop-buy-btn" id="btn-reset-save" style="background:#8b1e1e;color:#fff;border-color:#ff8a80;">${isEn ? 'Reset' : 'Sıfırla'}</button>
       </div>
     `;
-
-    const pwaBtn = content.querySelector('#btn-trigger-pwa');
-    pwaBtn.addEventListener('click', async () => {
-      if (this.deferredInstallPrompt) {
-        this.deferredInstallPrompt.prompt();
-        await this.deferredInstallPrompt.userChoice;
-        this.deferredInstallPrompt = null;
-      } else {
-        pwaBtn.textContent = 'Tarayıcı Menüsünden Ekle';
-      }
-    });
 
     content.querySelector('#btn-reset-save').addEventListener('click', () => {
       this.resetSaveData();
@@ -8011,111 +7999,6 @@ class CryptClashGame {
     this.spawnFloatingText(235, 130, `🎁 YENİ SANDIK: ${chosen.icon} ${chosen.name}!`, '#fbbf24', 16);
     this.saveProgress();
     this.renderArenaChestSlots();
-  }
-
-  setupWebDebugDock() {
-    const container = document.getElementById('web-debug-container');
-    const toggleBtn = document.getElementById('btn-toggle-debug');
-    const panel = document.getElementById('web-debug-panel');
-
-    // In production (Play Store APK / GitHub Pages), hide debug tools unless ?debug=1 or localhost
-    const isLocalTest = typeof window !== 'undefined' && (
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1' ||
-      window.location.search.includes('debug=1')
-    );
-    if (container && !isLocalTest) {
-      container.classList.add('hidden');
-      // Secret 7-tap developer unlock on game title
-      let devTapCount = 0;
-      const gameTitleEl = document.querySelector('.main-game-title');
-      if (gameTitleEl) {
-        gameTitleEl.addEventListener('click', () => {
-          devTapCount += 1;
-          if (devTapCount >= 7) {
-            container.classList.remove('hidden');
-            this.spawnFloatingText(235, 160, '🛠️ Geliştirici Konsolu Açıldı!', '#38bdf8', 18);
-          }
-        });
-      }
-    }
-
-    if (toggleBtn && panel) {
-      toggleBtn.addEventListener('click', () => {
-        panel.classList.toggle('hidden');
-        window.sfx.playMenuClick();
-      });
-    }
-
-    const wireDbg = (btnId, callback) => {
-      const btn = document.getElementById(btnId);
-      if (btn) {
-        btn.addEventListener('click', () => {
-          callback();
-          this.saveProgress();
-          this.updateAllUI();
-          window.sfx.playCoin();
-        });
-      }
-    };
-
-    wireDbg('dbg-add-gold', () => {
-      this.state.gold += 1000;
-      this.spawnFloatingText(235, 180, '+1,000 Altın 🪙', '#fbbf24', 20);
-    });
-
-    wireDbg('dbg-add-gems', () => {
-      this.state.soulGems += 50;
-      this.spawnFloatingText(235, 180, '+50 Ruh Taşı 💎', '#38bdf8', 20);
-    });
-
-    wireDbg('dbg-add-trophies', () => {
-      this.state.trophies = (this.state.trophies || 100) + 100;
-      this.spawnFloatingText(235, 180, '+100 Kupa 🏆', '#f59e0b', 20);
-      this.renderArena();
-    });
-
-    wireDbg('dbg-add-crown', () => {
-      this.awardCrown(1);
-    });
-
-    wireDbg('dbg-drop-chest', () => {
-      this.awardBattleChestDrop();
-      this.renderArenaChestSlots();
-    });
-
-    wireDbg('dbg-next-day', () => {
-      this.state.dailyLoginDay = ((this.state.dailyLoginDay || 1) % 7) + 1;
-      this.state.dailyClaimedToday = false;
-      this.spawnFloatingText(235, 180, `Gün İlerletildi: ${this.state.dailyLoginDay}. Gün 📅`, '#8b5cf6', 20);
-      this.openDailyLoginModal();
-    });
-
-    wireDbg('dbg-sim-afk', () => {
-      const loot = this.calculateOfflinePatrolLoot(3 * 3600);
-      this.showIdlePatrolModal(loot);
-    });
-
-    wireDbg('dbg-heal', () => {
-      this.state.player.hp = this.state.player.maxHp;
-      this.spawnFloatingText(120, 260, 'FULL CAN! 💚', '#22c55e', 22);
-    });
-
-    wireDbg('dbg-win-room', () => {
-      if (this.state.enemies && this.state.enemies.length > 0) {
-        this.state.enemies.forEach((e) => { e.hp = 0; });
-      }
-      if (this.state.enemy) this.state.enemy.hp = 0;
-      this.handleEnemyDefeated();
-    });
-
-    wireDbg('dbg-reset', () => {
-      this.state.dailyClaimedToday = false;
-      this.state.lastActiveTimestamp = Date.now();
-      this.state.crownCount = 0;
-      this.state.crownChestReady = false;
-      this.spawnFloatingText(235, 180, 'Süreçler Sıfırlandı 🔄', '#94a3b8', 18);
-    });
   }
 
   // =========================================================
