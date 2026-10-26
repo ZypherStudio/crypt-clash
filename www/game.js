@@ -1565,6 +1565,13 @@ class CryptClashGame {
       crownCount: 0,
       crownChestReady: false,
       claimedTrophyMilestones: [],
+      chestKeys: 2,
+      totalPassCrowns: 0,
+      royalPassUnlocked: false,
+      claimedFreePassTiers: [],
+      claimedRoyalPassTiers: [],
+      starterPackClaimed: false,
+      dailyBossLastDate: '',
       lang: typeof localStorage !== 'undefined' && localStorage.getItem('crypt_clash_lang')
         ? localStorage.getItem('crypt_clash_lang')
         : ((typeof navigator !== 'undefined' && navigator.language && navigator.language.toLowerCase().startsWith('tr')) ? 'tr' : 'en'),
@@ -1668,6 +1675,61 @@ class CryptClashGame {
     return (this.state.gearUpgrades && this.state.gearUpgrades[gearId]) || 0;
   }
 
+  getActiveArmorSetBonus() {
+    const slots = ['helm', 'armor', 'weapon', 'cape'];
+    const items = slots.map((s) => this.getEquippedItem(s)).filter(Boolean);
+    let totalPlus = 0;
+    let epicOrHigher = 0;
+    let mythicOrLeg = 0;
+
+    items.forEach((it) => {
+      totalPlus += this.getGearUpgradeLevel(it.id);
+      if (it.rarity === 'epic' || it.rarity === 'legendary' || it.rarity === 'mythic') epicOrHigher++;
+      if (it.rarity === 'legendary' || it.rarity === 'mythic') mythicOrLeg++;
+    });
+
+    if (mythicOrLeg >= 3 || totalPlus >= 8) {
+      return {
+        tier: 'mythic',
+        nameTr: '👑 Kusursuz Hükümdar Seti',
+        nameEn: '👑 Sovereign Monarch Set',
+        descTr: '+5⚔️ Hasar • +10❤️ Can • +6🛡️ Kalkan • +2🎲 Çarpışma',
+        descEn: '+5⚔️ ATK • +10❤️ HP • +6🛡️ Shield • +2🎲 Clash',
+        hp: 10,
+        atk: 5,
+        shield: 6,
+        clash: 2,
+        rune: 2
+      };
+    }
+    if (epicOrHigher >= 2 || totalPlus >= 3) {
+      return {
+        tier: 'epic',
+        nameTr: '🔥 Boss Avcısı Seti',
+        nameEn: '🔥 Boss Hunter Set',
+        descTr: '+3⚔️ Hasar • +5❤️ Can • +3🛡️ Kalkan • +1🎲 Çarpışma',
+        descEn: '+3⚔️ ATK • +5❤️ HP • +3🛡️ Shield • +1🎲 Clash',
+        hp: 5,
+        atk: 3,
+        shield: 3,
+        clash: 1,
+        rune: 1
+      };
+    }
+    return {
+      tier: 'common',
+      nameTr: '🛡️ Demir Şövalye Takımı',
+      nameEn: '🛡️ Iron Knight Set',
+      descTr: '+2❤️ Maks Can • +2🛡️ Kalkan • +1⚔️ Hasar',
+      descEn: '+2❤️ Max HP • +2🛡️ Shield • +1⚔️ ATK',
+      hp: 2,
+      atk: 1,
+      shield: 2,
+      clash: 0,
+      rune: 0
+    };
+  }
+
   getGearBonuses() {
     const totals = { hp: 0, atk: 0, shield: 0, clash: 0, rune: 0 };
     ['helm', 'armor', 'weapon', 'cape'].forEach((slot) => {
@@ -1687,6 +1749,14 @@ class CryptClashGame {
       totals.atk += pet.stats.atk || 0;
       totals.shield += pet.stats.shield || 0;
       totals.clash += pet.stats.clash || 0;
+    }
+    const setB = this.getActiveArmorSetBonus();
+    if (setB) {
+      totals.hp += setB.hp || 0;
+      totals.atk += setB.atk || 0;
+      totals.shield += setB.shield || 0;
+      totals.clash += setB.clash || 0;
+      totals.rune += setB.rune || 0;
     }
     return totals;
   }
@@ -1733,6 +1803,13 @@ class CryptClashGame {
         crownCount: this.state.crownCount,
         crownChestReady: this.state.crownChestReady,
         claimedTrophyMilestones: this.state.claimedTrophyMilestones,
+        chestKeys: this.state.chestKeys,
+        totalPassCrowns: this.state.totalPassCrowns,
+        royalPassUnlocked: this.state.royalPassUnlocked,
+        claimedFreePassTiers: this.state.claimedFreePassTiers,
+        claimedRoyalPassTiers: this.state.claimedRoyalPassTiers,
+        starterPackClaimed: this.state.starterPackClaimed,
+        dailyBossLastDate: this.state.dailyBossLastDate,
         lang: this.state.lang,
         player: this.state.player
       };
@@ -1794,6 +1871,13 @@ class CryptClashGame {
       if (typeof data.crownCount === 'number') this.state.crownCount = data.crownCount;
       if (typeof data.crownChestReady === 'boolean') this.state.crownChestReady = data.crownChestReady;
       if (Array.isArray(data.claimedTrophyMilestones)) this.state.claimedTrophyMilestones = data.claimedTrophyMilestones;
+      if (typeof data.chestKeys === 'number') this.state.chestKeys = data.chestKeys;
+      if (typeof data.totalPassCrowns === 'number') this.state.totalPassCrowns = data.totalPassCrowns;
+      if (typeof data.royalPassUnlocked === 'boolean') this.state.royalPassUnlocked = data.royalPassUnlocked;
+      if (Array.isArray(data.claimedFreePassTiers)) this.state.claimedFreePassTiers = data.claimedFreePassTiers;
+      if (Array.isArray(data.claimedRoyalPassTiers)) this.state.claimedRoyalPassTiers = data.claimedRoyalPassTiers;
+      if (typeof data.starterPackClaimed === 'boolean') this.state.starterPackClaimed = data.starterPackClaimed;
+      if (typeof data.dailyBossLastDate === 'string') this.state.dailyBossLastDate = data.dailyBossLastDate;
       if (data.player) {
         this.state.player = { ...this.state.player, ...data.player, tempAtkBuff: 0, tempClashBuff: 0, relicUsedThisTurn: false };
       }
@@ -2718,6 +2802,39 @@ class CryptClashGame {
     if (btnNextTrack) btnNextTrack.addEventListener('click', () => this.skipToNextTrack());
     const ticker = document.getElementById('soundtrack-ticker');
     if (ticker) ticker.addEventListener('click', () => this.skipToNextTrack());
+
+    // Final Launch Update Listeners: Battle Emotes, Crypt Pass, Daily Boss Hunt & Starter Pack
+    const btnEmote = document.getElementById('btn-battle-emote');
+    const emoteTray = document.getElementById('battle-emote-tray');
+    if (btnEmote && emoteTray) {
+      btnEmote.addEventListener('click', (e) => {
+        e.stopPropagation();
+        emoteTray.classList.toggle('hidden');
+        window.sfx.playMenuClick();
+      });
+      emoteTray.querySelectorAll('.emote-pick-btn').forEach((b) => {
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          emoteTray.classList.add('hidden');
+          this.sendBattleEmote(b.getAttribute('data-emote-icon') || '😂', b.getAttribute('data-emote-text') || 'Haha!');
+        });
+      });
+    }
+
+    const btnCryptPass = document.getElementById('btn-menu-crypt-pass');
+    if (btnCryptPass) btnCryptPass.addEventListener('click', () => this.openCryptPassModal());
+    const btnClosePass = document.getElementById('btn-close-pass-modal');
+    if (btnClosePass) btnClosePass.addEventListener('click', () => {
+      document.getElementById('crypt-pass-modal')?.classList.add('hidden');
+    });
+    const btnUnlockRoyal = document.getElementById('btn-unlock-royal-pass');
+    if (btnUnlockRoyal) btnUnlockRoyal.addEventListener('click', () => this.activateRoyalPass());
+
+    const btnDailyBoss = document.getElementById('btn-menu-daily-boss');
+    if (btnDailyBoss) btnDailyBoss.addEventListener('click', () => this.openDailyBossEventModal());
+
+    const btnStarterPack = document.getElementById('btn-menu-starter-pack');
+    if (btnStarterPack) btnStarterPack.addEventListener('click', () => this.openStarterPackModal());
   }
 
   // =========================================================
@@ -3444,6 +3561,26 @@ class CryptClashGame {
       await this.showLevelUpModal();
     }
 
+    // Handle Daily Boss Hunt Victory
+    if (this.state.activeBattleType === 'daily_boss') {
+      const trophyGain = 30;
+      this.state.trophies = (this.state.trophies || 100) + trophyGain;
+      this.state.chestKeys = (this.state.chestKeys ?? 2) + 1;
+      this.state.soulGems += 3;
+      this.state.dailyBossLastDate = this.getTodayDateString();
+      this.state.activeBattleType = 'campaign';
+      this.saveProgress();
+      this.spawnFloatingText(235, 130, `🔥 GÜNÜN BOSS AVI TAMAMLANDI! (+1🗝️ +3💎 +30🏆)`, '#fbbf24', 17);
+      await this.showPvpVictoryModal(
+        { nick: '🔥 Günün Efsanevi Boss Avı' },
+        trophyGain,
+        goldEarned,
+        droppedSouls + 3,
+        this.lastBossDroppedGear
+      );
+      return;
+    }
+
     // Handle Online PvP Duel Victory
     if (this.state.activeBattleType === 'pvp') {
       const rival = this.state.activePvpRival;
@@ -3771,6 +3908,30 @@ class CryptClashGame {
     if (gemEl) gemEl.textContent = `💎 ${this.state.soulGems}`;
     const goldEl = document.getElementById('menu-gold-count');
     if (goldEl) goldEl.textContent = `💰 ${this.state.gold}`;
+    const keyEl = document.getElementById('menu-key-count');
+    if (keyEl) keyEl.textContent = `🗝️ ${this.state.chestKeys ?? 2}`;
+    const chestKeyBadge = document.getElementById('menu-chest-keys-badge');
+    if (chestKeyBadge) {
+      const kCount = this.state.chestKeys ?? 2;
+      chestKeyBadge.textContent = this.state.lang === 'en' ? `🗝️ ${kCount} Keys` : `🗝️ ${kCount} Anahtar`;
+    }
+    const starterPackNotif = document.getElementById('starter-pack-notif');
+    const starterPackStatus = document.getElementById('starter-pack-status-label');
+    if (starterPackNotif && starterPackStatus) {
+      if (this.state.starterPackClaimed) {
+        starterPackNotif.textContent = '✓';
+        starterPackNotif.classList.remove('pulse-badge');
+        starterPackStatus.textContent = this.state.lang === 'en' ? 'Claimed!' : 'Alındı!';
+      } else {
+        starterPackNotif.textContent = this.state.lang === 'en' ? 'FREE' : 'BEDAVA';
+        starterPackStatus.textContent = this.state.lang === 'en' ? 'Free Welcome Gift!' : 'Ücretsiz Başlangıç!';
+      }
+    }
+    const passStatus = document.getElementById('crypt-pass-status-label');
+    if (passStatus) {
+      const tier = Math.min(10, Math.floor((this.state.totalPassCrowns || 0) / 3) + 1);
+      passStatus.textContent = this.state.lang === 'en' ? `Tier ${tier}/10 • ${this.state.totalPassCrowns || 0}👑` : `Kademe ${tier}/10 • ${this.state.totalPassCrowns || 0}👑`;
+    }
     const hpEl = document.getElementById('menu-hp-count');
     if (hpEl) hpEl.textContent = `❤️ ${p.hp}/${p.maxHp}`;
     const treeBadge = document.getElementById('menu-tree-badge');
@@ -4031,6 +4192,13 @@ class CryptClashGame {
     if (statShield) statShield.textContent = `+${gearB.shield}`;
     if (statClash) statClash.textContent = `+${gearB.clash}`;
     if (statPet && eqPet) statPet.textContent = `${eqPet.icon} ${eqPet.name.split(' ')[0]}`;
+
+    const setBanner = document.getElementById('inv-set-bonus-banner');
+    if (setBanner) {
+      const setB = this.getActiveArmorSetBonus();
+      const isEn = this.state.lang === 'en';
+      setBanner.innerHTML = `${isEn ? setB.nameEn : setB.nameTr}: <b>${isEn ? setB.descEn : setB.descTr}</b>`;
+    }
 
     // Update Category Tabs
     document.querySelectorAll('.inv-tab-btn').forEach((btn) => {
@@ -5089,6 +5257,22 @@ class CryptClashGame {
     if (chest.ready) {
       this.playClashChestOpeningSequence(chest, idx);
       return;
+    }
+
+    // Check if player has a Fast Chest Key (🗝️) to open immediately!
+    if ((this.state.chestKeys ?? 0) > 0) {
+      const isEn = this.state.lang === 'en';
+      const msg = isEn
+        ? `Use 1 🗝️ Chest Key to open ${chest.name} immediately without waiting? (Keys left: ${this.state.chestKeys})`
+        : `1 🗝️ Hızlı Sandık Anahtarı kullanarak ${chest.name} sandığını beklemeden anında açmak ister misin? (Kalan Anahtar: ${this.state.chestKeys}🗝️)`;
+      if (confirm(msg)) {
+        this.state.chestKeys -= 1;
+        chest.ready = true;
+        this.saveProgress();
+        this.updateAllUI();
+        this.playClashChestOpeningSequence(chest, idx);
+        return;
+      }
     }
 
     if (!chest.unlockStart) {
@@ -7796,6 +7980,7 @@ class CryptClashGame {
 
   awardCrown(amount = 1) {
     this.state.crownCount = (this.state.crownCount || 0) + amount;
+    this.state.totalPassCrowns = (this.state.totalPassCrowns || 0) + amount;
     if (this.state.crownCount >= 5) {
       this.state.crownChestReady = true;
       this.spawnFloatingText(235, 140, '👑 KRALİYET TAÇ SANDIĞI HAZIR!', '#ffd54f', 22);
@@ -8105,6 +8290,360 @@ class CryptClashGame {
 
     const radarCancel = document.getElementById('btn-cancel-matchmaking');
     if (radarCancel) radarCancel.textContent = dict.cancel;
+
+    const passLbl = document.getElementById('lbl-crypt-pass-btn');
+    if (passLbl) passLbl.textContent = isEn ? 'Season Pass' : 'Sezon Bileti';
+    const bossLbl = document.getElementById('lbl-daily-boss-btn');
+    if (bossLbl) bossLbl.textContent = isEn ? 'Daily Boss Hunt' : 'Günün Boss Avı';
+    const starterLbl = document.getElementById('lbl-starter-pack-btn');
+    if (starterLbl) starterLbl.textContent = isEn ? 'Welcome Pack' : 'Hoş Geldin Paketi';
+  }
+
+  // =========================================================
+  // FINAL LAUNCH UPDATE: EMOTES, CRYPT PASS, DAILY BOSS & STARTER PACK
+  // =========================================================
+
+  sendBattleEmote(icon, text) {
+    const pBubble = document.getElementById('player-emote-bubble');
+    const pIcon = document.getElementById('player-emote-icon');
+    const pText = document.getElementById('player-emote-text');
+    if (pBubble && pIcon && pText) {
+      pIcon.textContent = icon;
+      pText.textContent = text;
+      pBubble.classList.remove('hidden');
+      window.sfx.playDicePickup();
+      this.vibrate(25);
+      if (this.playerEmoteTimer) clearTimeout(this.playerEmoteTimer);
+      this.playerEmoteTimer = setTimeout(() => {
+        pBubble.classList.add('hidden');
+      }, 2200);
+    }
+
+    // Dynamic Enemy / Online Rival Reply Bubble after 850ms
+    const eBubble = document.getElementById('enemy-emote-bubble');
+    const eIcon = document.getElementById('enemy-emote-icon');
+    const eText = document.getElementById('enemy-emote-text');
+    if (eBubble && eIcon && eText && this.state.enemy && this.state.enemy.hp > 0) {
+      const isEn = this.state.lang === 'en';
+      const replies = isEn
+        ? [
+            { icon: '😡', text: 'Insolent Knight!' },
+            { icon: '😈', text: 'Your bones are mine!' },
+            { icon: '🔥', text: 'Face my wrath!' },
+            { icon: '💀', text: 'No mercy in the crypt!' },
+            { icon: '⚔️', text: 'Come at me!' }
+          ]
+        : [
+            { icon: '😡', text: 'Küstah Şövalye!' },
+            { icon: '😈', text: 'Göreceğiz bakalım!' },
+            { icon: '🔥', text: 'Öfkemden kaçamazsın!' },
+            { icon: '💀', text: 'Mahzen mezarın olacak!' },
+            { icon: '⚔️', text: 'Kılıcını hazırla!' }
+          ];
+      const pick = replies[Math.floor(Math.random() * replies.length)];
+      setTimeout(() => {
+        if (!this.state.enemy || this.state.enemy.hp <= 0) return;
+        eIcon.textContent = pick.icon;
+        eText.textContent = pick.text;
+        eBubble.classList.remove('hidden');
+        window.sfx.playMenuClick();
+        if (this.enemyEmoteTimer) clearTimeout(this.enemyEmoteTimer);
+        this.enemyEmoteTimer = setTimeout(() => {
+          eBubble.classList.add('hidden');
+        }, 2300);
+      }, 850);
+    }
+  }
+
+  getCryptPassTiers() {
+    return [
+      { tier: 1, reqCrowns: 0, free: { type: 'gold', amount: 100, icon: '🪙', label: '100 Altın' }, royal: { type: 'keys', amount: 2, icon: '🗝️', label: '2 Sandık Anahtarı' } },
+      { tier: 2, reqCrowns: 3, free: { type: 'keys', amount: 1, icon: '🗝️', label: '1 Anahtar' }, royal: { type: 'gems', amount: 4, icon: '💎', label: '4 Ruh Taşı' } },
+      { tier: 3, reqCrowns: 6, free: { type: 'chest', chestId: 'silver', icon: '🥈', label: 'Gümüş Sandık' }, royal: { type: 'gold', amount: 250, icon: '💰', label: '250 Altın' } },
+      { tier: 4, reqCrowns: 9, free: { type: 'gems', amount: 2, icon: '💎', label: '2 Ruh Taşı' }, royal: { type: 'chest', chestId: 'gold', icon: '🥇', label: 'Altın Sandık' } },
+      { tier: 5, reqCrowns: 12, free: { type: 'gold', amount: 200, icon: '🪙', label: '200 Altın' }, royal: { type: 'keys', amount: 3, icon: '🗝️', label: '3 Anahtar' } },
+      { tier: 6, reqCrowns: 15, free: { type: 'keys', amount: 1, icon: '🗝️', label: '1 Anahtar' }, royal: { type: 'gems', amount: 6, icon: '💎', label: '6 Ruh Taşı' } },
+      { tier: 7, reqCrowns: 18, free: { type: 'chest', chestId: 'gold', icon: '🥇', label: 'Altın Sandık' }, royal: { type: 'gold', amount: 400, icon: '💰', label: '400 Altın' } },
+      { tier: 8, reqCrowns: 21, free: { type: 'gems', amount: 3, icon: '💎', label: '3 Ruh Taşı' }, royal: { type: 'chest', chestId: 'magic', icon: '🔮', label: 'Büyülü Sandık' } },
+      { tier: 9, reqCrowns: 24, free: { type: 'keys', amount: 2, icon: '🗝️', label: '2 Anahtar' }, royal: { type: 'gems', amount: 10, icon: '💎', label: '10 Ruh Taşı' } },
+      { tier: 10, reqCrowns: 27, free: { type: 'chest', chestId: 'magic', icon: '🔮', label: 'Büyülü Sandık' }, royal: { type: 'title_gear', title: 'Sezon 1 Hükümdarı', icon: '👑', label: 'Sezon 1 Hükümdarı + Eşya' } }
+    ];
+  }
+
+  openCryptPassModal() {
+    const modal = document.getElementById('crypt-pass-modal');
+    if (!modal) return;
+
+    const crowns = this.state.totalPassCrowns || 0;
+    const curTier = Math.min(10, Math.floor(crowns / 3) + 1);
+    const isRoyal = Boolean(this.state.royalPassUnlocked);
+    const claimedFree = Array.isArray(this.state.claimedFreePassTiers) ? this.state.claimedFreePassTiers : [];
+    const claimedRoyal = Array.isArray(this.state.claimedRoyalPassTiers) ? this.state.claimedRoyalPassTiers : [];
+
+    const tierPill = document.getElementById('pass-current-tier-pill');
+    if (tierPill) {
+      tierPill.textContent = `👑 Kademe ${curTier} / 10 (${crowns} Taç)`;
+    }
+
+    const royalBtn = document.getElementById('btn-unlock-royal-pass');
+    if (royalBtn) {
+      if (isRoyal) {
+        royalBtn.disabled = true;
+        royalBtn.textContent = '✓ Kraliyet Bileti Aktif';
+      } else {
+        royalBtn.disabled = false;
+        royalBtn.textContent = '✨ Kraliyet Bileti Aç (15💎)';
+      }
+    }
+
+    const listEl = document.getElementById('crypt-pass-track-list');
+    if (listEl) {
+      const tiers = this.getCryptPassTiers();
+      listEl.innerHTML = tiers.map((t) => {
+        const unlocked = crowns >= t.reqCrowns;
+        const freeDone = claimedFree.includes(t.tier);
+        const royalDone = claimedRoyal.includes(t.tier);
+
+        const canClaimFree = unlocked && !freeDone;
+        const canClaimRoyal = unlocked && isRoyal && !royalDone;
+
+        return `
+          <div class="pass-tier-row ${unlocked ? 'unlocked' : ''}">
+            <div class="pass-tier-num">
+              <span>KADEME ${t.tier}</span>
+              <small style="font-size:8.5px;color:#94a3b8;">${t.reqCrowns}👑</small>
+            </div>
+            <div class="pass-reward-box">
+              <span style="font-size:16px;">${t.free.icon}</span>
+              <span class="pass-reward-title">Ücretsiz: ${t.free.label}</span>
+              <button class="pass-claim-mini-btn" data-ptier="${t.tier}" data-proyal="0" ${canClaimFree ? '' : 'disabled'}>
+                ${freeDone ? '✓ Alındı' : (unlocked ? '🎁 AL' : '🔒 Kilitli')}
+              </button>
+            </div>
+            <div class="pass-reward-box royal">
+              <span style="font-size:16px;">${t.royal.icon}</span>
+              <span class="pass-reward-title" style="color:#fde047;">Kraliyet: ${t.royal.label}</span>
+              <button class="pass-claim-mini-btn" data-ptier="${t.tier}" data-proyal="1" ${canClaimRoyal ? '' : 'disabled'}>
+                ${royalDone ? '✓ Alındı' : (!isRoyal ? '👑 Bilet Gerekli' : (unlocked ? '🎁 AL' : '🔒 Kilitli'))}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      listEl.querySelectorAll('.pass-claim-mini-btn:not(:disabled)').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const tr = parseInt(btn.getAttribute('data-ptier') || '1', 10);
+          const ry = btn.getAttribute('data-proyal') === '1';
+          this.claimPassReward(tr, ry);
+        });
+      });
+    }
+
+    modal.classList.remove('hidden');
+    window.sfx.playMenuClick();
+  }
+
+  activateRoyalPass() {
+    if (this.state.royalPassUnlocked) return;
+    const cost = 15;
+    if (this.state.soulGems < cost) {
+      alert(`Kraliyet Sezon Biletini açmak için ${cost}💎 Ruh Taşı gerekli! (Mevcut: ${this.state.soulGems}💎)`);
+      return;
+    }
+    this.state.soulGems -= cost;
+    this.state.royalPassUnlocked = true;
+    window.sfx.playFanfare();
+    this.vibrate([40, 60, 80]);
+    this.saveProgress();
+    this.updateAllUI();
+    this.openCryptPassModal();
+  }
+
+  claimPassReward(tierNum, isRoyal) {
+    const tiers = this.getCryptPassTiers();
+    const row = tiers.find((x) => x.tier === tierNum);
+    if (!row) return;
+    if ((this.state.totalPassCrowns || 0) < row.reqCrowns) return;
+
+    if (isRoyal) {
+      if (!this.state.royalPassUnlocked) return;
+      if (!Array.isArray(this.state.claimedRoyalPassTiers)) this.state.claimedRoyalPassTiers = [];
+      if (this.state.claimedRoyalPassTiers.includes(tierNum)) return;
+      this.state.claimedRoyalPassTiers.push(tierNum);
+      this.applyPassRewardObject(row.royal);
+    } else {
+      if (!Array.isArray(this.state.claimedFreePassTiers)) this.state.claimedFreePassTiers = [];
+      if (this.state.claimedFreePassTiers.includes(tierNum)) return;
+      this.state.claimedFreePassTiers.push(tierNum);
+      this.applyPassRewardObject(row.free);
+    }
+
+    window.sfx.playLevelUp();
+    this.saveProgress();
+    this.updateAllUI();
+    this.openCryptPassModal();
+  }
+
+  applyPassRewardObject(rew) {
+    if (!rew) return;
+    if (rew.type === 'gold') {
+      this.state.gold += rew.amount;
+      this.spawnFloatingText(235, 150, `+${rew.amount} Altın 🪙`, '#fbbf24', 20);
+    } else if (rew.type === 'gems') {
+      this.state.soulGems += rew.amount;
+      this.spawnFloatingText(235, 150, `+${rew.amount} Ruh Taşı 💎`, '#38bdf8', 20);
+    } else if (rew.type === 'keys') {
+      this.state.chestKeys = (this.state.chestKeys ?? 2) + rew.amount;
+      this.spawnFloatingText(235, 150, `+${rew.amount} Sandık Anahtarı 🗝️`, '#fde047', 20);
+    } else if (rew.type === 'chest') {
+      this.awardSpecificChestDrop(rew.chestId);
+    } else if (rew.type === 'title_gear') {
+      this.state.equippedTitle = rew.title || 'Sezon 1 Hükümdarı';
+      this.unlockRandomBossGearDrop();
+      this.spawnFloatingText(235, 150, `👑 UNVAN & EŞYA AÇILDI!`, '#fde047', 20);
+    }
+  }
+
+  openDailyBossEventModal() {
+    if (this.state.busy) return;
+    const overlay = document.getElementById('modal-overlay');
+    const title = document.getElementById('modal-title');
+    const sub = document.getElementById('modal-subtitle');
+    const content = document.getElementById('modal-content');
+    const closeBtn = document.getElementById('modal-close-btn');
+
+    const dayIdx = new Date().getDay();
+    const dailyBosses = [
+      { name: 'Kızıl Hidra İmparatoru', spriteKey: 'hydra_boss', icon: '🐉', hp: 85 + this.state.level * 12, dmg: 7 + this.state.level },
+      { name: 'Kemik Kral Malakor', spriteKey: 'boneking_boss', icon: '💀', hp: 90 + this.state.level * 12, dmg: 8 + this.state.level },
+      { name: 'Zehirli Kimera Tiranı', spriteKey: 'chimera_boss', icon: '🦁', hp: 95 + this.state.level * 12, dmg: 8 + this.state.level },
+      { name: 'Buzul Ejderi Frost-Wyrm', spriteKey: 'wyrm_boss', icon: '❄️', hp: 100 + this.state.level * 12, dmg: 9 + this.state.level },
+      { name: 'Cehennem Lordu Azazel', spriteKey: 'azazel_boss', icon: '👹', hp: 110 + this.state.level * 12, dmg: 9 + this.state.level }
+    ];
+    const boss = dailyBosses[dayIdx % dailyBosses.length];
+    const alreadyDoneToday = this.state.dailyBossLastDate === this.getTodayDateString();
+
+    title.textContent = `🔥 GÜNÜN ÖZEL BOSS AVI`;
+    sub.textContent = `Bugünün Hedefi: ${boss.icon} ${boss.name} (2x Ganimet & Sandık Anahtarı!)`;
+    closeBtn.classList.remove('hidden');
+    closeBtn.textContent = 'Kapat';
+
+    content.innerHTML = `
+      <div class="shop-item active-chapter">
+        <div class="shop-item-info">
+          <div class="shop-item-icon" style="font-size:30px;">${boss.icon}</div>
+          <div>
+            <div class="shop-item-title">${boss.name} [GÜNLÜK ETKİNLİK]</div>
+            <div class="shop-item-desc">❤️ ${boss.hp} Can • ⚔️ ${boss.dmg} Hasar • Zafer Ödülü: <b>+120💰 Altın, +5💎 Ruh Taşı, +1🗝️ Sandık Anahtarı, +30🏆 Kupa & Boss Eşyası!</b></div>
+          </div>
+        </div>
+        <button class="shop-buy-btn" id="btn-launch-daily-boss">${alreadyDoneToday ? 'Tekrar Avla' : '⚔️ SAVAŞA GİR'}</button>
+      </div>
+    `;
+
+    content.querySelector('#btn-launch-daily-boss').addEventListener('click', () => {
+      overlay.classList.add('hidden');
+      this.startDailyBossBattle(boss);
+    });
+
+    overlay.classList.remove('hidden');
+    window.sfx.playMenuClick();
+  }
+
+  startDailyBossBattle(bossConfig) {
+    document.getElementById('scene-main-menu').classList.add('hidden');
+    this.state.activeBattleType = 'daily_boss';
+    this.state.activePvpRival = null;
+    this.state.currentScene = 'battle';
+
+    const dailyEnemy = {
+      name: `🔥 ${bossConfig.name} [GÜNÜN BOSSU]`,
+      spriteKey: bossConfig.spriteKey || 'hydra_boss',
+      hp: bossConfig.hp,
+      maxHp: bossConfig.hp,
+      clashMod: Math.min(3, Math.floor(this.state.level / 3) + 1),
+      baseDmg: bossConfig.dmg,
+      goldReward: 120 + this.state.level * 15,
+      xpReward: 60 + this.state.level * 10,
+      trait: `🔥 Günlük Boss • 2x Ödül & +1🗝️ Anahtar`,
+      regen: 2,
+      lifesteal: 1,
+      isBoss: true,
+      bleed: 0,
+      weakenClash: 0
+    };
+
+    this.state.enemies = [dailyEnemy];
+    this.state.targetEnemyIdx = 0;
+    this.state.enemy = dailyEnemy;
+    this.state.clash.enemyMod = dailyEnemy.clashMod;
+    this.anim.enemyAlpha = 1.0;
+
+    this.state.player.hp = this.state.player.maxHp;
+    this.state.player.shield = Math.max(this.state.player.shield, 15);
+
+    if (window.bgm) {
+      window.bgm.setSceneTrack('arena');
+      this.updateSoundtrackBanner();
+    }
+
+    this.spawnFloatingText(235, 180, `🔥 GÜNÜN BOSS AVI BAŞLADI!`, '#f97316', 18);
+    this.startNewPlayerTurn();
+    this.updateAllUI();
+  }
+
+  openStarterPackModal() {
+    if (this.state.busy) return;
+    const overlay = document.getElementById('modal-overlay');
+    const title = document.getElementById('modal-title');
+    const sub = document.getElementById('modal-subtitle');
+    const content = document.getElementById('modal-content');
+    const closeBtn = document.getElementById('modal-close-btn');
+
+    const claimed = Boolean(this.state.starterPackClaimed);
+    title.textContent = `🎁 ŞÖVALYE HOŞ GELDİN PAKETİ`;
+    sub.textContent = 'Crypt Clash Resmi Mobil Çıkış Özel Başlangıç Hediye Paketi:';
+    closeBtn.classList.remove('hidden');
+    closeBtn.textContent = 'Kapat';
+
+    content.innerHTML = `
+      <div class="shop-item active-chapter">
+        <div class="shop-item-info">
+          <div class="shop-item-icon" style="font-size:30px;">🎁</div>
+          <div>
+            <div class="shop-item-title">Kraliyet Başlangıç Hazinesi (ÜCRETSİZ)</div>
+            <div class="shop-item-desc">Paketin İçeriği:<br>• <b>+250 💰 Altın</b><br>• <b>+5 💎 Ruh Taşı</b><br>• <b>+2 🗝️ Hızlı Sandık Anahtarı</b><br>• <b>1x 🥇 Altın Hazine Sandığı (Anında Açılır!)</b></div>
+          </div>
+        </div>
+        <button class="shop-buy-btn" id="btn-claim-starter-pack" ${claimed ? 'disabled' : ''}>${claimed ? '✓ Alındı' : '🎁 ÜCRETSİZ AL'}</button>
+      </div>
+    `;
+
+    const claimBtn = content.querySelector('#btn-claim-starter-pack');
+    if (claimBtn && !claimed) {
+      claimBtn.addEventListener('click', () => {
+        this.state.starterPackClaimed = true;
+        this.state.gold += 250;
+        this.state.soulGems += 5;
+        this.state.chestKeys = (this.state.chestKeys ?? 2) + 2;
+        overlay.classList.add('hidden');
+        window.sfx.playFanfare();
+        this.saveProgress();
+        this.updateAllUI();
+        this.playClashChestOpeningSequence({
+          id: 'c_starter_gold',
+          name: 'Hoş Geldin Altın Sandığı',
+          tier: 'gold',
+          gold: 150,
+          gems: 4,
+          spriteSrc: 'assets/chest_gold.png'
+        }, null);
+      });
+    }
+
+    overlay.classList.remove('hidden');
+    window.sfx.playMenuClick();
   }
 
   skipToNextTrack() {

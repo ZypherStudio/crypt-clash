@@ -191,6 +191,27 @@
         <!-- Interactive Battle Canvas -->
         <canvas id="battle-canvas" width="470" height="444"></canvas>
 
+        <!-- Clash Royale Style Live Emote / Taunt Speech Bubbles -->
+        <div id="player-emote-bubble" class="battle-emote-bubble player-bubble hidden">
+          <span class="emote-bubble-icon" id="player-emote-icon">😂</span>
+          <span class="emote-bubble-text" id="player-emote-text">Haha!</span>
+        </div>
+        <div id="enemy-emote-bubble" class="battle-emote-bubble enemy-bubble hidden">
+          <span class="emote-bubble-icon" id="enemy-emote-icon">😡</span>
+          <span class="emote-bubble-text" id="enemy-emote-text">Küstah Şövalye!</span>
+        </div>
+
+        <!-- Live Battle Emote Picker Button & Tray -->
+        <button id="btn-battle-emote" class="battle-emote-trigger-btn" title="Savaş Emojisi / Savaş Narası Gönder">💬</button>
+        <div id="battle-emote-tray" class="battle-emote-tray hidden">
+          <button class="emote-pick-btn" data-emote-icon="😂" data-emote-text="Haha!">😂<span>Haha!</span></button>
+          <button class="emote-pick-btn" data-emote-icon="😤" data-emote-text="Kılıcım Keskin!">😤<span>Keskin!</span></button>
+          <button class="emote-pick-btn" data-emote-icon="🛡️" data-emote-text="Demir Duvar!">🛡️<span>Duvar!</span></button>
+          <button class="emote-pick-btn" data-emote-icon="🔥" data-emote-text="Ejder Öfkesi!">🔥<span>Yan!</span></button>
+          <button class="emote-pick-btn" data-emote-icon="🤝" data-emote-text="İyi Oyun!">🤝<span>İyi Oyun</span></button>
+          <button class="emote-pick-btn" data-emote-icon="💀" data-emote-text="Mahzene Gömül!">💀<span>Mahzen!</span></button>
+        </div>
+
         <!-- Tactile Hint Overlay -->
         <div id="turn-hint" class="turn-hint">
           Sağdaki zarları <b>Saldırı</b>, <b>Şifa</b> veya <b>Rün</b> kartına sürükle!
@@ -458,6 +479,29 @@
     </div>
 
     <!-- =========================================================
+         SEASON 1: CRYPT PASS (FREE & ROYAL PASS TIER TRACK MODAL)
+         ========================================================= -->
+    <div id="crypt-pass-modal" class="modal-overlay hidden">
+      <div class="modal-box retention-modal-box crypt-pass-box">
+        <div class="retention-modal-header crypt-pass-header">
+          <span class="retention-badge-pill">👑 SEZON 1 • KANLI TAÇ BİLETİ</span>
+          <button id="btn-close-pass-modal" class="modal-close-x">✕</button>
+        </div>
+        <h2 class="retention-title">CRYPT PASS ÖDÜL YOLU</h2>
+        <p class="retention-sub" id="crypt-pass-sub">Savaşlardan 👑 Taç kazanarak kademeleri aç! Her 3 Taç = 1 Yeni Kademe.</p>
+
+        <div class="crypt-pass-top-bar">
+          <div class="pass-tier-badge" id="pass-current-tier-pill">👑 Kademe 1 / 10 (0 Taç)</div>
+          <button id="btn-unlock-royal-pass" class="royal-pass-activate-btn">✨ Kraliyet Bileti Aç (15💎)</button>
+        </div>
+
+        <div class="crypt-pass-track-list" id="crypt-pass-track-list">
+          <!-- Populated dynamically with 10 Tiers (Free + Royal Rewards) -->
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
          CLASH ROYALE STYLE LIVE PVP MATCHMAKING RADAR MODAL
          ========================================================= -->
     <div id="pvp-matchmaking-modal" class="modal-overlay hidden">
@@ -549,6 +593,7 @@
 
           <div class="rpg-profile-right">
             <div class="rpg-currency-bar">
+              <span class="rpg-curr-pill key" id="menu-key-count" title="Hızlı Sandık Anahtarları (Beklemeden Sandık Açar)">🗝️ 2</span>
               <span class="rpg-curr-pill gem" id="menu-soul-gem-count" title="Ruh Taşları">💎 0</span>
               <span class="rpg-curr-pill gold" id="menu-gold-count" title="Altın">💰 12</span>
             </div>
@@ -728,13 +773,43 @@
               <span class="ret-badge" id="idle-patrol-notif">TOPLA</span>
             </button>
           </div>
+
+          <!-- NEW FINAL UPDATE ROW: CRYPT PASS, DAILY BOSS HUNT & STARTER WELCOME PACK -->
+          <div class="retention-actions-row pass-event-row">
+            <button id="btn-menu-crypt-pass" class="retention-pill-btn pass-pill">
+              <span class="ret-icon">👑</span>
+              <div class="ret-text">
+                <strong id="lbl-crypt-pass-btn">Sezon Bileti</strong>
+                <span id="crypt-pass-status-label">Sezon 1: Kanlı Taç</span>
+              </div>
+              <span class="ret-badge pulse-badge" id="crypt-pass-notif">PASS</span>
+            </button>
+
+            <button id="btn-menu-daily-boss" class="retention-pill-btn boss-event-pill">
+              <span class="ret-icon">🔥</span>
+              <div class="ret-text">
+                <strong id="lbl-daily-boss-btn">Günün Boss Avı</strong>
+                <span id="daily-boss-status-label">2x Altın + Anahtar 🗝️</span>
+              </div>
+              <span class="ret-badge" style="background:#dc2626;color:#fff;">2X</span>
+            </button>
+
+            <button id="btn-menu-starter-pack" class="retention-pill-btn starter-pack-pill">
+              <span class="ret-icon">🎁</span>
+              <div class="ret-text">
+                <strong id="lbl-starter-pack-btn">Hoş Geldin Paketi</strong>
+                <span id="starter-pack-status-label">Ücretsiz Başlangıç!</span>
+              </div>
+              <span class="ret-badge pulse-badge" id="starter-pack-notif">BEDAVA</span>
+            </button>
+          </div>
         </div>
 
         <!-- CLASH ROYALE STYLE 4 CHEST SLOTS ON MAIN MENU -->
         <div class="menu-chest-dock">
           <div class="menu-chest-dock-head">
-            <span class="menu-chest-head-title">📦 <span id="lbl-menu-chests">SANDIK YUVALARI</span></span>
-            <small id="menu-chest-status-note">Dokunarak Aç veya Kilit Başlat</small>
+            <span class="menu-chest-head-title">📦 <span id="lbl-menu-chests">SANDIK YUVALARI</span> <b id="menu-chest-keys-badge" class="chest-key-inline-badge">🗝️ 2 Anahtar</b></span>
+            <small id="menu-chest-status-note">Dokunarak Aç veya 🗝️ Anahtar Kullan</small>
           </div>
           <div class="arena-chest-slots-grid menu-chest-grid" id="menu-chest-slots-grid">
             <!-- 4 Chest Slots Rendered Live! -->
@@ -1087,6 +1162,11 @@
           <span>🛡️ Kalkan: <b id="inv-stat-shield">+0</b></span>
           <span>🎲 Çarpışma: <b id="inv-stat-clash">+0</b></span>
           <span>🐉 Pet: <b id="inv-stat-pet">Aktif</b></span>
+        </div>
+
+        <!-- Active Set Bonus Banner -->
+        <div class="inv-set-bonus-banner" id="inv-set-bonus-banner">
+          🛡️ <b>Aktif Zırh Seti Bonusu:</b> Demir Şövalye Takımı (+2❤️ Maks Can • +1🛡️ Kalkan)
         </div>
 
         <!-- Category Filter Tabs (Helm, Armor, Weapon, Cape, Pet Companion, Collection Album) -->
