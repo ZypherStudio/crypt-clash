@@ -1572,6 +1572,7 @@ class CryptClashGame {
       claimedRoyalPassTiers: [],
       starterPackClaimed: false,
       dailyBossLastDate: '',
+      playerId: 'cc_uid_' + Math.random().toString(36).slice(2, 10),
       lang: typeof localStorage !== 'undefined' && localStorage.getItem('crypt_clash_lang')
         ? localStorage.getItem('crypt_clash_lang')
         : ((typeof navigator !== 'undefined' && navigator.language && navigator.language.toLowerCase().startsWith('tr')) ? 'tr' : 'en'),
@@ -1653,6 +1654,9 @@ class CryptClashGame {
     setTimeout(() => {
       this.checkOfflinePatrolLoot();
     }, 600);
+
+    this.initCloudArenaSync();
+    this.startLiveChestTicker();
 
     requestAnimationFrame((ts) => this.loop(ts));
   }
@@ -1810,6 +1814,7 @@ class CryptClashGame {
         claimedRoyalPassTiers: this.state.claimedRoyalPassTiers,
         starterPackClaimed: this.state.starterPackClaimed,
         dailyBossLastDate: this.state.dailyBossLastDate,
+        playerId: this.state.playerId,
         lang: this.state.lang,
         player: this.state.player
       };
@@ -1878,6 +1883,7 @@ class CryptClashGame {
       if (Array.isArray(data.claimedRoyalPassTiers)) this.state.claimedRoyalPassTiers = data.claimedRoyalPassTiers;
       if (typeof data.starterPackClaimed === 'boolean') this.state.starterPackClaimed = data.starterPackClaimed;
       if (typeof data.dailyBossLastDate === 'string') this.state.dailyBossLastDate = data.dailyBossLastDate;
+      if (typeof data.playerId === 'string' && data.playerId) this.state.playerId = data.playerId;
       if (data.player) {
         this.state.player = { ...this.state.player, ...data.player, tempAtkBuff: 0, tempClashBuff: 0, relicUsedThisTurn: false };
       }
@@ -2835,6 +2841,12 @@ class CryptClashGame {
 
     const btnStarterPack = document.getElementById('btn-menu-starter-pack');
     if (btnStarterPack) btnStarterPack.addEventListener('click', () => this.openStarterPackModal());
+
+    const gemStorePill = document.getElementById('menu-soul-gem-count');
+    if (gemStorePill) gemStorePill.addEventListener('click', () => this.openGemStoreModal());
+
+    const btnSyncCloud = document.getElementById('btn-sync-cloud-now');
+    if (btnSyncCloud) btnSyncCloud.addEventListener('click', () => this.syncPlayerProfileToCloud(true));
   }
 
   // =========================================================
@@ -3905,7 +3917,7 @@ class CryptClashGame {
     if (xpTxt) xpTxt.textContent = `${this.state.xp} / ${this.state.xpToNext} XP`;
 
     const gemEl = document.getElementById('menu-soul-gem-count');
-    if (gemEl) gemEl.textContent = `💎 ${this.state.soulGems}`;
+    if (gemEl) gemEl.textContent = `💎 ${this.state.soulGems} +`;
     const goldEl = document.getElementById('menu-gold-count');
     if (goldEl) goldEl.textContent = `💰 ${this.state.gold}`;
     const keyEl = document.getElementById('menu-key-count');
@@ -5119,6 +5131,8 @@ class CryptClashGame {
       window.bgm.setSceneTrack('arena');
       this.updateSoundtrackBanner();
     }
+    this.syncPlayerProfileToCloud();
+    this.fetchCloudArenaState();
     this.renderArena();
     window.sfx.playMenuClick();
   }
@@ -5750,11 +5764,12 @@ class CryptClashGame {
 
     const pLv = this.state.level || 1;
     const seed = this.pvpSeed || 0;
+    const pool = this.getCombinedCloudRivals();
 
-    // Generate 4 near-level online rivals matched to player's level!
-    const matchedRivals = ONLINE_RIVAL_ROSTER.map((r, idx) => {
-      const lvOffset = ((idx + seed) % 3) - 1; // -1, 0, or +1 relative to player level
-      const rLv = Math.max(1, pLv + lvOffset);
+    // Generate 4 near-level online rivals matched to player's level (prioritizing real cloud players)!
+    const matchedRivals = pool.map((r, idx) => {
+      const lvOffset = ((idx + seed) % 3) - 1;
+      const rLv = r.isRealCloudPlayer ? Math.max(1, r.baseLv || pLv) : Math.max(1, pLv + lvOffset);
       const rHp = 26 + rLv * 7 + (idx % 3) * 3;
       const rDmg = 4 + Math.floor(rLv * 1.3);
       const rClash = Math.min(3, Math.floor((rLv - 1) / 2));
@@ -6054,8 +6069,8 @@ class CryptClashGame {
 
     const allEntries = [
       playerEntry,
-      ...ONLINE_RIVAL_ROSTER.map((r) => ({
-        nick: r.nick,
+      ...this.getCombinedCloudRivals().map((r) => ({
+        nick: r.isRealCloudPlayer ? `🟢 ${r.nick}` : r.nick,
         title: r.title,
         trophies: r.trophies,
         bestTower: r.bestTower,
@@ -6884,6 +6899,16 @@ class CryptClashGame {
 
     const items = [
       {
+        icon: '💳',
+        title: 'Google Play Ruh Taşı & Kraliyet Paketleri (80💎 / 250💎 / 1000💎)',
+        desc: 'Gerçek ödeme ile Ruh Taşı, Hızlı Sandık Anahtarı (🗝️) ve Sezon 1 Kraliyet Bileti satın al!',
+        cost: 0,
+        currency: 'store',
+        action: () => {
+          this.openGemStoreModal();
+        }
+      },
+      {
         icon: '💎',
         title: 'Kese Dolusu Ruh Taşı (+5💎)',
         desc: 'Play Store Elmas Paketi (500 Altınla takas et veya zindanda kullan!)',
@@ -6971,8 +6996,8 @@ class CryptClashGame {
       const row = document.createElement('div');
       row.className = 'shop-item';
 
-      let btnText = `${item.cost} ${item.currency === 'gems' ? '💎' : 'Gold'}`;
-      let disabled = item.currency === 'gems' ? (this.state.soulGems < item.cost) : (this.state.gold < item.cost);
+      let btnText = item.currency === 'store' ? 'MAĞAZA ➔' : `${item.cost} ${item.currency === 'gems' ? '💎' : 'Gold'}`;
+      let disabled = item.currency === 'store' ? false : (item.currency === 'gems' ? (this.state.soulGems < item.cost) : (this.state.gold < item.cost));
 
       if (isEquippedRelic || isEquippedPet) {
         btnText = 'KUŞANILDI';
@@ -7009,6 +7034,9 @@ class CryptClashGame {
             this.state.player.ownedRelics.push(item.relicId);
           }
           this.state.player.relicId = item.relicId;
+        } else if (item.currency === 'store') {
+          item.action();
+          return;
         } else {
           if (item.currency === 'gems') {
             if (this.state.soulGems < item.cost) return;
@@ -8448,7 +8476,8 @@ class CryptClashGame {
     if (this.state.royalPassUnlocked) return;
     const cost = 15;
     if (this.state.soulGems < cost) {
-      alert(`Kraliyet Sezon Biletini açmak için ${cost}💎 Ruh Taşı gerekli! (Mevcut: ${this.state.soulGems}💎)`);
+      document.getElementById('crypt-pass-modal')?.classList.add('hidden');
+      this.openGemStoreModal();
       return;
     }
     this.state.soulGems -= cost;
@@ -8644,6 +8673,363 @@ class CryptClashGame {
 
     overlay.classList.remove('hidden');
     window.sfx.playMenuClick();
+  }
+
+  // =========================================================
+  // REAL LIVE CLOUD MULTIPLAYER SYNC, LIVE CHEST TICKER & GOOGLE PLAY BILLING
+  // =========================================================
+
+  startLiveChestTicker() {
+    if (this.liveChestInterval) clearInterval(this.liveChestInterval);
+    this.liveChestInterval = setInterval(() => {
+      const slots = this.state.chestSlots;
+      if (!Array.isArray(slots)) return;
+      let hasActiveCountdown = false;
+      let newlyReady = false;
+      slots.forEach((c) => {
+        if (c && c.unlockStart && !c.ready) {
+          hasActiveCountdown = true;
+          const elapsed = Date.now() - c.unlockStart;
+          if (elapsed >= c.unlockTimeMs) {
+            c.ready = true;
+            newlyReady = true;
+          }
+        }
+      });
+      if (hasActiveCountdown || newlyReady) {
+        this.renderArenaChestSlots();
+        if (newlyReady) {
+          this.saveProgress();
+        }
+      }
+    }, 1000);
+  }
+
+  initCloudArenaSync() {
+    this.cloudTopicUrl = 'https://ntfy.sh/crypt_clash_arena_v1_zypher';
+    this.cloudPlayersMap = {};
+    this.lastCloudPingMs = 28;
+
+    try {
+      const cached = localStorage.getItem('crypt_clash_cloud_players_v1');
+      if (cached) {
+        this.cloudPlayersMap = JSON.parse(cached) || {};
+      }
+    } catch (e) {}
+
+    // Initial fetch + sync after 1.2s
+    setTimeout(() => {
+      this.fetchCloudArenaState();
+      this.syncPlayerProfileToCloud(false);
+    }, 1200);
+
+    // Real-time Server-Sent Events (SSE) subscription for live updates from other players!
+    try {
+      if (typeof EventSource !== 'undefined') {
+        const es = new EventSource(`${this.cloudTopicUrl}/sse`);
+        es.onmessage = (ev) => {
+          try {
+            const wrapper = JSON.parse(ev.data);
+            if (wrapper && wrapper.message) {
+              const payload = JSON.parse(wrapper.message);
+              if (payload && payload.playerId) {
+                this.ingestCloudPlayerPayload(payload);
+              }
+            }
+          } catch (err) {}
+        };
+      }
+    } catch (e) {}
+  }
+
+  ingestCloudPlayerPayload(p) {
+    if (!p || !p.playerId) return;
+    if (typeof p.worldBossHp === 'number' && p.worldBossHp > 0 && p.worldBossHp < (this.state.worldBossHp || 2500)) {
+      this.state.worldBossHp = p.worldBossHp;
+    }
+    if (p.playerId === this.state.playerId) return;
+    this.cloudPlayersMap[p.playerId] = {
+      id: p.playerId,
+      nick: String(p.nick || 'Şövalye').slice(0, 18),
+      title: String(p.title || 'Online Şövalye').slice(0, 24),
+      helmId: p.helmId || 'helm_iron',
+      portrait: p.portrait || 'assets/hero_front_helm_iron.png',
+      baseLv: Math.max(1, Number(p.level) || 1),
+      trophies: Math.max(0, Number(p.trophies) || 100),
+      bestTower: Math.max(1, Number(p.bestTower) || 1),
+      petIcon: p.petIcon || '🐉',
+      raidTotalDmg: Number(p.raidTotalDmg) || 0,
+      isRealCloudPlayer: true,
+      updatedAt: Date.now()
+    };
+    try {
+      localStorage.setItem('crypt_clash_cloud_players_v1', JSON.stringify(this.cloudPlayersMap));
+    } catch (e) {}
+  }
+
+  async fetchCloudArenaState() {
+    const startTs = Date.now();
+    const statusText = document.getElementById('cloud-sync-status-text');
+    try {
+      const res = await fetch(`${this.cloudTopicUrl}/json?poll=1&since=48h`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const rawText = await res.text();
+      this.lastCloudPingMs = Math.max(12, Date.now() - startTs);
+
+      const lines = rawText.split('\n').filter((l) => l.trim().length > 0);
+      lines.forEach((line) => {
+        try {
+          const item = JSON.parse(line);
+          if (item && item.message) {
+            const payload = JSON.parse(item.message);
+            this.ingestCloudPlayerPayload(payload);
+          }
+        } catch (err) {}
+      });
+
+      const realCount = Object.keys(this.cloudPlayersMap || {}).length + 1;
+      if (statusText) {
+        statusText.innerHTML = `🟢 <b>CANLI BULUT SUNUCUSU AKTİF:</b> ${realCount} Online Şövalye • ⚡ ${this.lastCloudPingMs}ms`;
+      }
+      this.renderPvpMatchmakingList();
+      this.renderArenaLeaderboard();
+      this.renderGuildRaidPanel();
+    } catch (e) {
+      if (statusText) {
+        statusText.innerHTML = `🟡 <b>BULUT ÖNBELLEĞİ AKTİF:</b> Yerel + Küresel Havuz Hazır`;
+      }
+    }
+  }
+
+  async syncPlayerProfileToCloud(manualTrigger = false) {
+    const eqHelm = this.getEquippedItem('helm');
+    const eqPet = this.getEquippedPet();
+    const payload = {
+      type: 'profile_sync',
+      playerId: this.state.playerId || 'cc_uid_local',
+      nick: this.state.playerNick || 'Sir Elden',
+      title: this.state.equippedTitle || 'Gezgin Şövalye',
+      level: this.state.level || 1,
+      trophies: this.state.trophies || 100,
+      bestTower: Math.max(this.state.bestTowerFloor || 1, this.state.towerFloor || 1),
+      helmId: eqHelm ? eqHelm.id : 'helm_iron',
+      portrait: (eqHelm && eqHelm.portraitSrc) ? eqHelm.portraitSrc : 'assets/hero_front_helm_iron.png',
+      petIcon: eqPet ? eqPet.icon : '🐉',
+      raidTotalDmg: this.state.raidTotalDmg || 0,
+      worldBossHp: this.state.worldBossHp ?? 2500,
+      ts: Date.now()
+    };
+
+    try {
+      await fetch(this.cloudTopicUrl, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      if (manualTrigger) {
+        this.spawnFloatingText(235, 150, '🌐 BULUT SUNUCUSUNA EŞİTLENDİ!', '#34d399', 17);
+        window.sfx.playMagicChime();
+        await this.fetchCloudArenaState();
+      }
+    } catch (e) {
+      if (manualTrigger) {
+        this.spawnFloatingText(235, 150, '⚠️ Bağlantı Bekleniyor (Yerel Kayıt Güvende)', '#fbbf24', 15);
+      }
+    }
+  }
+
+  getCombinedCloudRivals() {
+    const cloudList = Object.values(this.cloudPlayersMap || {});
+    const seenNicks = new Set(cloudList.map((c) => c.nick.toLowerCase()));
+    const fallbackList = ONLINE_RIVAL_ROSTER.filter((r) => !seenNicks.has(r.nick.toLowerCase()));
+    return [...cloudList, ...fallbackList];
+  }
+
+  // =========================================================
+  // OFFICIAL GOOGLE PLAY BILLING STORE MODAL (IN-APP PURCHASES)
+  // =========================================================
+
+  getGooglePlayStoreCatalog() {
+    return [
+      {
+        sku: 'gems_80',
+        icon: '💎',
+        title: 'Avuç Dolusu Ruh Taşı (+80💎)',
+        desc: '80 Ruh Taşı 💎 + 1 🗝️ Hızlı Sandık Anahtarı. (Play Console SKU: gems_80)',
+        priceTr: '₺29,99',
+        priceEn: '$0.99',
+        gems: 80,
+        keys: 1,
+        gold: 100
+      },
+      {
+        sku: 'gems_250',
+        icon: '💠',
+        title: 'Şövalye Ruh Sandığı (+250💎 & +3🗝️)',
+        desc: '250 Ruh Taşı 💎 + 3 🗝️ Anahtar + 500💰 Altın! (Play Console SKU: gems_250)',
+        priceTr: '₺79,99',
+        priceEn: '$2.99',
+        gems: 250,
+        keys: 3,
+        gold: 500,
+        popular: true
+      },
+      {
+        sku: 'royal_pass_s1',
+        icon: '👑',
+        title: 'Sezon 1: Kraliyet Bileti (Crypt Pass) + 100💎',
+        desc: 'Tüm Sezon 1 Kraliyet Ödüllerini Açar + Anında 100💎 Ruh Taşı & 2🗝️ Anahtar! (SKU: royal_pass_s1)',
+        priceTr: '₺99,99',
+        priceEn: '$3.99',
+        gems: 100,
+        keys: 2,
+        gold: 300,
+        unlockRoyalPass: true
+      },
+      {
+        sku: 'gems_1000',
+        icon: '🔮',
+        title: 'Hükümdar Hazinesi (+1.000💎 + 🔮 Büyülü Sandık)',
+        desc: '1.000 Ruh Taşı 💎 + 5 🗝️ Anahtar + 2.000💰 Altın + 1x Büyülü Sandık! (SKU: gems_1000)',
+        priceTr: '₺249,99',
+        priceEn: '$7.99',
+        gems: 1000,
+        keys: 5,
+        gold: 2000,
+        chestTier: 'magic'
+      }
+    ];
+  }
+
+  openGemStoreModal() {
+    if (this.state.busy) return;
+    const overlay = document.getElementById('modal-overlay');
+    const title = document.getElementById('modal-title');
+    const sub = document.getElementById('modal-subtitle');
+    const content = document.getElementById('modal-content');
+    const closeBtn = document.getElementById('modal-close-btn');
+    const isEn = this.state.lang === 'en';
+
+    const hasNativeBilling = Boolean(window.AndroidBilling && typeof window.AndroidBilling.purchase === 'function');
+    title.textContent = isEn ? '💎 GOOGLE PLAY GEM & PASS STORE' : '💎 RUH TAŞI & KRALİYET MAĞAZASI';
+    sub.textContent = hasNativeBilling
+      ? '🟢 Google Play Billing v6 Aktif • Güvenli Mobil Ödeme'
+      : '💳 Resmi Google Play Uygulama İçi Satın Alma Mağazası (SKU: gems_80, gems_250, royal_pass_s1, gems_1000)';
+    closeBtn.classList.remove('hidden');
+    closeBtn.textContent = isEn ? 'Close' : 'Kapat';
+
+    const packages = this.getGooglePlayStoreCatalog();
+    content.innerHTML = packages.map((pkg) => `
+      <div class="shop-item ${pkg.popular ? 'active-chapter' : ''}">
+        <div class="shop-item-info">
+          <div class="shop-item-icon" style="font-size:28px;">${pkg.icon}</div>
+          <div>
+            <div class="shop-item-title">${pkg.title}</div>
+            <div class="shop-item-desc">${pkg.desc}</div>
+          </div>
+        </div>
+        <button class="shop-buy-btn" data-sku="${pkg.sku}" style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%);color:#fff;border-color:#4ade80;">
+          ${isEn ? pkg.priceEn : pkg.priceTr}
+        </button>
+      </div>
+    `).join('') + `
+      <div class="shop-item">
+        <div class="shop-item-info">
+          <div class="shop-item-icon">🪙</div>
+          <div>
+            <div class="shop-item-title">Oyun İçi Altın Takası (80💰 ➔ +5💎 Ruh Taşı)</div>
+            <div class="shop-item-desc">Zindanda topladığın 80 Altını anında +5 Ruh Taşına dönüştür (Mevcut: ${this.state.gold}💰).</div>
+          </div>
+        </div>
+        <button class="shop-buy-btn" id="btn-exchange-gold-gems" ${this.state.gold < 80 ? 'disabled' : ''}>80 💰</button>
+      </div>
+    `;
+
+    content.querySelectorAll('[data-sku]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const sku = btn.getAttribute('data-sku');
+        this.purchaseStoreSku(sku);
+      });
+    });
+
+    const exBtn = content.querySelector('#btn-exchange-gold-gems');
+    if (exBtn) {
+      exBtn.addEventListener('click', () => {
+        if (this.state.gold < 80) return;
+        this.state.gold -= 80;
+        this.state.soulGems += 5;
+        window.sfx.playCoin();
+        this.saveProgress();
+        this.updateAllUI();
+        this.openGemStoreModal();
+      });
+    }
+
+    overlay.classList.remove('hidden');
+    window.sfx.playMenuClick();
+  }
+
+  async purchaseStoreSku(skuId) {
+    window.sfx.playMenuClick();
+
+    // 1. Native Android Google Play Billing v6 Bridge (MainActivity.java)
+    if (window.AndroidBilling && typeof window.AndroidBilling.purchase === 'function') {
+      window.AndroidBilling.purchase(skuId);
+      return;
+    }
+
+    // 2. Chrome / Play Store TWA Digital Goods API
+    if (typeof window.getDigitalGoodsService === 'function') {
+      try {
+        const service = await window.getDigitalGoodsService('https://play.google.com/billing');
+        if (service) {
+          const paymentMethods = [{
+            supportedMethods: 'https://play.google.com/billing',
+            data: { sku: skuId }
+          }];
+          const details = { total: { label: skuId, amount: { currency: 'TRY', value: '29.99' } } };
+          const request = new PaymentRequest(paymentMethods, details);
+          const response = await request.show();
+          const { purchaseToken } = response.details;
+          await response.complete('success');
+          this.onGooglePlayPurchaseSuccess(skuId, purchaseToken || 'dga_token');
+          return;
+        }
+      } catch (e) {}
+    }
+
+    // 3. Inform if running outside Google Play signed session or before Play Console SKU activation
+    this.onGooglePlayPurchaseStatus(skuId, -1, 'PLAY_CONSOLE_SKU_PENDING');
+  }
+
+  onGooglePlayPurchaseSuccess(productId, purchaseToken) {
+    const catalog = this.getGooglePlayStoreCatalog();
+    const pkg = catalog.find((p) => p.sku === productId) || catalog[0];
+
+    this.state.soulGems += pkg.gems || 0;
+    this.state.chestKeys = (this.state.chestKeys ?? 2) + (pkg.keys || 0);
+    this.state.gold += pkg.gold || 0;
+    if (pkg.unlockRoyalPass) {
+      this.state.royalPassUnlocked = true;
+    }
+    if (pkg.chestTier) {
+      this.awardSpecificChestDrop(pkg.chestTier);
+    }
+
+    document.getElementById('modal-overlay')?.classList.add('hidden');
+    window.sfx.playFanfare();
+    this.vibrate([50, 80, 120]);
+    this.spawnFloatingText(235, 150, `💎 SATIN ALMA BAŞARILI: +${pkg.gems}💎!`, '#4ade80', 20);
+    this.saveProgress();
+    this.syncPlayerProfileToCloud(false);
+    this.updateAllUI();
+  }
+
+  onGooglePlayPurchaseStatus(productId, code, msg) {
+    alert(
+      `💳 Google Play Billing Bağlantısı Hazır!\n\n` +
+      `Ürün Kodu (SKU): ${productId}\n` +
+      `Durum: Google Play Console -> Para Kazanma -> Uygulama İçi Ürünler (In-app products) bölümüne "${productId}" kodunu ekleyip etkinleştirdiğinde gerçek kart ödemesi otomatik açılır.`
+    );
   }
 
   skipToNextTrack() {

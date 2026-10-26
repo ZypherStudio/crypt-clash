@@ -594,7 +594,7 @@
           <div class="rpg-profile-right">
             <div class="rpg-currency-bar">
               <span class="rpg-curr-pill key" id="menu-key-count" title="Hızlı Sandık Anahtarları (Beklemeden Sandık Açar)">🗝️ 2</span>
-              <span class="rpg-curr-pill gem" id="menu-soul-gem-count" title="Ruh Taşları">💎 0</span>
+              <button class="rpg-curr-pill gem" id="menu-soul-gem-count" title="💎 Google Play Ruh Taşı & Paket Mağazasını Aç" style="cursor:pointer;">💎 0 +</button>
               <span class="rpg-curr-pill gold" id="menu-gold-count" title="Altın">💰 12</span>
             </div>
             <div class="rpg-audio-mini">
@@ -1418,6 +1418,12 @@
       </div>
 
       <div class="quests-container arena-container">
+        <!-- Live Cloud Server Sync Banner -->
+        <div id="cloud-arena-status-bar" class="cloud-arena-status-bar" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;background:rgba(6,78,59,0.55);border:1px solid rgba(52,211,153,0.45);font-size:10px;color:#a7f3d0;margin-bottom:4px;">
+          <span id="cloud-sync-status-text">🟢 <b>CANLI BULUT SUNUCUSU:</b> Senkronize Ediliyor...</span>
+          <button id="btn-sync-cloud-now" style="background:rgba(16,185,129,0.25);border:1px solid #34d399;color:#ecfdf5;border-radius:5px;padding:2px 7px;font-size:9.5px;font-weight:800;cursor:pointer;">🔄 Şimdi Eşitle</button>
+        </div>
+
         <!-- Online Player Profile & Nickname Bar -->
         <div class="arena-profile-card">
           <div class="arena-profile-left">
